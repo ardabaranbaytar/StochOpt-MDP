@@ -40,9 +40,9 @@ $$\mathbb{E}\left[(D - y)^+\right] = \mathbb{E}\left[(y - D)^+\right] + \mathbb{
 
 **Bellman equation.**
 
-$$V^{*}(x) = \min_{y \ge x} \left\{ K \cdot \mathbf{1}_{\{y > x\}} + c(y - x) + L(y) + \gamma W(y) \right\}$$
+$$V^*(x) = \min_{y \ge x} \left\{ K \cdot \mathbf{1}_{\{y > x\}} + c(y - x) + L(y) + \gamma W(y) \right\}$$
 
-$$W(y) = \mathbb{E}_D \left[ V^{*}(\max(y - D, -B)) \right]$$
+$$W(y) = \mathbb{E}_D \left[ V^*(\max(y - D, -B)) \right]$$
 
 Backlog below $-B$ is absorbed at $-B$ (truncation). The key observation is that $W$ depends **only on $y$**, so
 each Bellman sweep is
@@ -55,12 +55,13 @@ $$(TV)(x) = -cx + \min \left\{ H(x), \; K + \min_{y > x} H(y) \right\}$$
 which costs $O(|\mathcal{S}|^2)$ per sweep (the product) plus $O(|\mathcal{S}|)$ for the optimisation, instead of
 $O(|\mathcal{S}|^3)$ when the expectation is recomputed for every $(x, y)$ pair.
 
-**Stopping rule.** Iterate until $\vert{}V_{k+1} - V_k\vert{}_\infty < \varepsilon \frac{1 - \gamma}{2\gamma}$, which guarantees
-$\vert{}V_{k+1} - V^{*}\vert{}_\infty < \frac{\varepsilon}{2}$.
+**Stopping rule.** Iterate until the first inequality holds; it guarantees the second:
+
+$$\Vert{}V_{k+1} - V_k\Vert{}_\infty < \varepsilon \frac{1 - \gamma}{2\gamma} \implies \Vert{}V_{k+1} - V^*\Vert{}_\infty < \frac{\varepsilon}{2}$$
 
 **Structure of the optimum.** For $K > 0$, $K$-convexity of the cost-to-go implies an $(s, S)$ policy (Scarf, 1960):
 
-$$\pi^{*}(x) = \begin{cases} S - x, & x \le s, \\ 0, & x > s. \end{cases}$$
+$$\pi^*(x) = \begin{cases} S - x, & x \le s, \\ 0, & x > s. \end{cases}$$
 
 The solver does not assume this; it *checks* it (`is_s_S_optimal`) by verifying that the ordering states form the
 prefix $x \le s$ and all reach the same order-up-to level. For $K = 0$ the policy degenerates to base-stock
@@ -106,9 +107,9 @@ The MDP solution is $(s, S) = (3, 23)$.
   **7 % cheaper than the static EOQ rule**, which additionally delivers a markedly lower service level
   (CSL 0.68 vs 0.83) because the deterministic $(s, Q)$ carries no safety stock.
   The difference is significant on the paired (common-random-number) comparison.
-* **Theory vs. simulation.** $V^{*}(0) = 596.36$; the simulated mean discounted cost of the MDP policy is
+* **Theory vs. simulation.** $V^*(0) = 596.36$; the simulated mean discounted cost of the MDP policy is
   $597.37 \pm 0.77$ (1.3 standard errors apart). The undiscounted per-day average (28.88) is compared with the
-  proxy $(1-\gamma)V^{*}(0) = 29.82$; the ≈3 % gap is expected because the simulator is undiscounted.
+  proxy $(1-\gamma)V^*(0) = 29.82$; the ≈3 % gap is expected because the simulator is undiscounted.
 
 *Definitions.* CSL — share of days with zero shortage. Fill rate — served demand / total demand. Stockout day —
 a day ending with net stock $\le 0$. Mean on-hand — average of $\max(x, 0)$ at day end.
@@ -174,11 +175,11 @@ curl -X POST localhost:8000/api/v1/optimize -H 'content-type: application/json' 
 }'
 ```
 
-| Endpoint | Description |
-|---|---|
-| `POST /api/v1/optimize` | Solve the MDP; returns `s`, `S`, `is_s_S_optimal`, `iterations`, `residual`, `states`, `policy`, `values` |
-| `POST /api/v1/simulate` | Optimise, then benchmark MDP vs Base-Stock vs Static EOQ; adds `T`, `replications`, `seed` |
-| `GET /health` | Liveness probe |
+| Endpoint                | Description                                                                                                            |
+| :---------------------- | :--------------------------------------------------------------------------------------------------------------------- |
+| `POST /api/v1/optimize` | Solve the MDP; returns `s`, `S`, `is_s_S_optimal`, `iterations`, `residual`, `states`, `policy`, `values`              |
+| `POST /api/v1/simulate` | Optimise, then benchmark MDP vs Base-Stock vs Static EOQ; adds `T`, `replications`, `seed`                             |
+| `GET /health`           | Liveness probe                                                                                                         |
 
 Invalid parameters (`h ≤ 0`, `K < 0`, `μ ≤ 0`, Negative Binomial with `var ≤ μ`, …) return **422** with a
 field-level message; domain errors raised by the solver return **400**.
