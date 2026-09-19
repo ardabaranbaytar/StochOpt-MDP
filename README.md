@@ -40,7 +40,7 @@ $$\mathbb{E}\left[(D - y)^+\right] = \mathbb{E}\left[(y - D)^+\right] + \mathbb{
 
 **Bellman equation.**
 
-$$V^*(x) = \min_{y \ge x} \left\{ K \cdot \mathbf{1}_{\{y > x\}} + c(y - x) + L(y) + \gamma W(y) \right\}$$
+$$V^*(x) = \min_{y \ge x} \left[ K \cdot \mathbf{1}_{\{y > x\}} + c(y - x) + L(y) + \gamma W(y) \right]$$
 
 $$W(y) = \mathbb{E}_D \left[ V^*(\max(y - D, -B)) \right]$$
 
@@ -50,7 +50,7 @@ each Bellman sweep is
 1. $W = P V$ — a single matrix–vector product with the transition matrix $P_{y,x'} = P(y - D = x')$;
 2. $H(y) = c\,y + L(y) + \gamma W(y)$, and $\min_{y > x} H(y)$ for every $x$ via one reverse cumulative minimum,
 
-$$(TV)(x) = -cx + \min \left\{ H(x), \; K + \min_{y > x} H(y) \right\}$$
+$$(TV)(x) = -cx + \min \left[ H(x), \; K + \min_{y > x} H(y) \right]$$
 
 which costs $O(|\mathcal{S}|^2)$ per sweep (the product) plus $O(|\mathcal{S}|)$ for the optimisation, instead of
 $O(|\mathcal{S}|^3)$ when the expectation is recomputed for every $(x, y)$ pair.
