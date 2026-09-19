@@ -1,0 +1,45 @@
+[tool.poetry]
+name = "stochopt-mdp"
+version = "0.1.0"
+description = "MDP-based (s, S) optimisation engine for stochastic inventory control"
+authors = ["ardabaran119@gmail.com"]
+readme = "README.md"
+license = "MIT"
+packages = [
+  { include = "core" },
+  { include = "simulation" },
+  { include = "api" },
+  { include = "dashboard" },
+]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+numpy = "*"
+scipy = "*"
+simpy = "*"
+fastapi = "*"
+uvicorn = "*"
+pydantic = "*"
+streamlit = "*"
+plotly = "*"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "*"
+httpx = "*"
+bandit = "*"
+ruff = "*"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "NPY"]
+
+[build-system]
+requires = ["poetry-core>=1.9.0"]
+build-backend = "poetry.core.masonry.api"
