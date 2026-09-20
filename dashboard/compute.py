@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import io
 from dataclasses import dataclass
 
 import numpy as np
@@ -10,6 +11,7 @@ import pandas as pd
 from api.schemas import SimulateRequest
 from core import NegativeBinomial, Poisson
 from core.demand import DemandDistribution
+from core.forecasting import DemandFitResult, fit_demand_distribution
 from core.mdp_solver import MDPSolution, solve_mdp
 from simulation import (
     BaseStockPolicy,
@@ -109,3 +111,29 @@ def mdp_trajectory(a: Analysis, replication: int, days: int = 90) -> Trajectory:
     inv, orders = res.inventory_levels[:n], res.orders[:n]
     start = np.concatenate([[0], inv[:-1]])  # start-of-day stock (lead time 0)
     return Trajectory(np.arange(1, n + 1), inv, start + orders, orders)
+
+
+def parse_sales_csv(data: bytes) -> list[int]:
+    """Daily sales from the first numeric column of a CSV (a header row is optional)."""
+    try:
+        df = pd.read_csv(io.BytesIO(data), header=None, skip_blank_lines=True)
+    except (pd.errors.ParserError, pd.errors.EmptyDataError, UnicodeDecodeError) as e:
+        raise ValueError(f"CSV okunamadı: {e}") from e
+    for col in df.columns:
+        values = pd.to_numeric(df[col], errors="coerce")
+        # first row may be a header; any other non-numeric cell makes the column unusable
+        if values.iloc[1:].notna().all() and values.notna().sum() >= 2:
+            return [int(v) if float(v).is_integer() else v for v in values.dropna()]
+    raise ValueError("CSV içinde sayısal bir satış sütunu bulunamadı")
+
+
+def fit_from_csv(data: bytes) -> DemandFitResult:
+    return fit_demand_distribution(parse_sales_csv(data))
+
+
+def fit_to_model_settings(fit: DemandFitResult) -> dict[str, object]:
+    """Sidebar widget values (``kind`` / ``mu`` / ``var``) implied by a fit result."""
+    settings: dict[str, object] = {"kind": fit.distribution_type, "mu": round(fit.mu, 2)}
+    if fit.distribution_type == "negative_binomial":
+        settings["var"] = round(fit.variance, 2)
+    return settings

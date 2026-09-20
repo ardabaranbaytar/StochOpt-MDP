@@ -24,7 +24,11 @@ METRICS = (
 
 
 class MDPPolicy:
-    """Table lookup of the MDP optimum; positions outside [-B, C] are clamped."""
+    """Table lookup of the MDP optimum; positions outside [-B, C] are clamped.
+
+    The table is indexed by the inventory position (net + on-order), which is exactly what
+    ``InventoryEnvironment`` passes to ``order_quantity`` for any lead time.
+    """
 
     name = "MDP"
 
@@ -155,7 +159,9 @@ class BenchmarkEngine:
     def compare_with_mdp(self, solution: MDPSolution, report: PolicyReport) -> dict[str, float]:
         """Theory vs simulation for the MDP policy.
 
-        * discounted: simulated E[sum gamma^t cost_t] vs V*(x0) -- the exact identity.
+        * discounted: simulated E[sum gamma^t cost_t] vs V*(x0) -- the exact identity for
+          lead_time == 0.  For lead_time > 0 V* excludes the sunk costs of the first L days, so
+          the two only agree approximately.
         * average: simulated mean per-period cost vs (1 - gamma) V*(x0) -- the requested
           per-period proxy; it is only approximate because the simulation is undiscounted.
         """

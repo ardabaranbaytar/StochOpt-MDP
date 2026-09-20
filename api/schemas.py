@@ -6,8 +6,11 @@ from typing import Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from core.forecasting import DemandFitResult
+
 MAX_STATES = 1_000  # per side of the state space (B and C)
 MAX_SIM_STEPS = 1_000_000  # T * replications
+MAX_SALES_POINTS = 100_000
 
 
 class DemandConfig(BaseModel):
@@ -100,3 +103,22 @@ class SimulateResponse(BaseModel):
     simulated_discounted_cost: float = Field(
         description="Simulated mean discounted cost of the MDP policy from x0=0 (compare to V*(0))."
     )
+
+
+class FitDemandRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    sales: list[int] = Field(
+        min_length=2,
+        max_length=MAX_SALES_POINTS,
+        description="Daily sales history (non-negative integers, at least 2 days).",
+    )
+
+    @model_validator(mode="after")
+    def _check_non_negative(self) -> Self:
+        if any(v < 0 for v in self.sales):
+            raise ValueError("sales must be non-negative")
+        return self
+
+
+FitDemandResponse = DemandFitResult

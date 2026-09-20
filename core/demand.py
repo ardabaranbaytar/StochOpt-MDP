@@ -35,6 +35,10 @@ class DemandDistribution(ABC):
     def _frozen(self):
         """Frozen ``scipy.stats`` discrete distribution."""
 
+    @abstractmethod
+    def convolve(self, n: int) -> DemandDistribution:
+        """Distribution of the sum of ``n`` i.i.d. copies (cumulative demand over n periods)."""
+
     def pmf(self, k: ArrayLike) -> FloatArray:
         return np.asarray(self._frozen().pmf(np.asarray(k)), dtype=np.float64)
 
@@ -76,6 +80,11 @@ class Poisson(DemandDistribution):
     def _frozen(self):
         return stats.poisson(self.mu)
 
+    def convolve(self, n: int) -> Poisson:
+        if n < 1:
+            raise ValueError("n must be >= 1")
+        return Poisson(n * self.mu)
+
 
 class NegativeBinomial(DemandDistribution):
     """Over-dispersed demand parametrised by ``mean`` and size ``r``.
@@ -106,3 +115,9 @@ class NegativeBinomial(DemandDistribution):
 
     def _frozen(self):
         return stats.nbinom(self.r, self.r / (self.r + self._mean))
+
+    def convolve(self, n: int) -> NegativeBinomial:
+        """Sum of n i.i.d. NB(mean m, size r) is NB(mean n*m, size n*r) (same success prob)."""
+        if n < 1:
+            raise ValueError("n must be >= 1")
+        return NegativeBinomial(n * self._mean, n * self.r)

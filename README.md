@@ -147,6 +147,29 @@ poetry run uvicorn api.main:app --reload
 poetry run streamlit run dashboard/app.py
 ```
 
+### Docker ile Çalıştırma
+
+Docker ve Docker Compose kurulu olmalıdır. Her iki servis aynı `stochopt-net` bridge ağı üzerinde çalışır.
+
+```bash
+# 1. imajı derle ve servisleri başlat
+docker compose up --build -d
+
+# 2. servis durumunu / healthcheck sonuçlarını kontrol et
+docker compose ps
+
+# 3. erişim
+#    REST API   ->  http://localhost:8000/docs   (sağlık: http://localhost:8000/health)
+#    dashboard  ->  http://localhost:8501
+
+# 4. logları izle / durdur
+docker compose logs -f
+docker compose down
+```
+
+İmaj `python:3.11-slim` tabanlı multi-stage build ile oluşturulur (Poetry yalnızca build aşamasında
+bulunur) ve konteynerler root olmayan `appuser` kullanıcısı ile çalışır.
+
 ### Library
 
 ```python

@@ -1,11 +1,18 @@
 """Value iteration for the discounted (s, S) inventory MDP.
 
-State x in [-B, C] (integers; negative = backlog).  Action: order up to
-y in [x, C].  One-period cost with fixed cost K, unit cost c, expected
-holding/shortage cost L(y) and discount gamma:
+State x in [-B, C] (integers) is the *inventory position* IP = net inventory + on-order
+(negative = backlog); with lead time 0 this is simply the net inventory.  Action: order up to
+y in [x, C].  With fixed cost K, unit cost c, holding/shortage costs h, p, discount gamma
+and a deterministic lead time L >= 0:
 
-    T(V)(x) = min_{y >= x} { K*1[y > x] + c*(y - x) + L(y) + gamma * W(y) }
+    T(V)(x) = min_{y >= x} { K*1[y > x] + c*(y - x) + gamma^L * L~(y) + gamma * W(y) }
     W(y)    = E_D[ V(max(y - D, -B)) ]
+    L~(y)   = h E[(y - D_{L+1})^+] + p E[(D_{L+1} - y)^+]     (D_{L+1}: L+1 periods of demand)
+
+For L = 0, L~ is the classical one-period L(y).  For L > 0 the holding/shortage cost of an
+order placed now is incurred L periods later (hence gamma^L) on net inventory y - D_{L+1}.
+The resulting (s, S) policy is a rule on the inventory position, not on net inventory.
+The costs of the first L periods (driven by orders placed before t = 0) are sunk and ignored.
 
 W depends on y only, so each sweep is one matrix-vector product (W = P @ V)
 plus a suffix-minimum over y, i.e. O(N^2) for the product and O(N) for the
@@ -25,7 +32,7 @@ from .demand import DemandDistribution, FloatArray
 
 @dataclass(frozen=True)
 class MDPSolution:
-    states: np.ndarray  # x = -B..C
+    states: np.ndarray  # inventory position x = -B..C (net inventory when lead_time == 0)
     values: FloatArray  # V*(x)
     policy: np.ndarray  # pi*(x): optimal order quantity
     s: int | None  # highest x with pi*(x) > 0 (None if never ordering)
@@ -34,6 +41,7 @@ class MDPSolution:
     iterations: int
     residual: float  # last ||V_{k+1} - V_k||_inf
     converged: bool = True  # False if max_iter was hit before the stopping rule
+    lead_time: int = 0  # deterministic lead time the policy was solved for
 
 
 def transition_matrix(demand: DemandDistribution, B: int, C: int) -> FloatArray:
@@ -79,14 +87,19 @@ def solve_mdp(
     eps: float = 1e-8,
     max_iter: int = 100_000,
     tie_tol: float = 1e-9,
+    lead_time: int = 0,
 ) -> MDPSolution:
+    """Solve for the optimal (s, S) policy on the inventory position (see module docstring)."""
     if not 0 < gamma < 1:
         raise ValueError("gamma must be in (0, 1)")
     if B < 0 or C < 1 or fixed_cost < 0 or order_cost < 0:
         raise ValueError("need B >= 0, C >= 1, K >= 0, c >= 0")
+    if lead_time < 0 or int(lead_time) != lead_time:
+        raise ValueError("lead_time must be a non-negative integer")
+    lead_time = int(lead_time)
 
     x = np.arange(-B, C + 1)
-    L = expected_cost(x, demand, holding, shortage)
+    L = gamma**lead_time * expected_cost(x, demand, holding, shortage, lead_time=lead_time)
     P = transition_matrix(demand, B, C)
     K, c = fixed_cost, order_cost
 
@@ -140,4 +153,5 @@ def solve_mdp(
         iterations=it,
         residual=residual,
         converged=converged,
+        lead_time=lead_time,
     )

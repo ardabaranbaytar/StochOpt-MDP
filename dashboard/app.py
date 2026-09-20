@@ -12,7 +12,18 @@ import streamlit as st  # noqa: E402
 from pydantic import ValidationError  # noqa: E402
 
 from api.schemas import SimulateRequest  # noqa: E402
-from dashboard.compute import benchmark_table, mdp_trajectory, run_analysis  # noqa: E402
+from dashboard.compute import (  # noqa: E402
+    benchmark_table,
+    fit_from_csv,
+    fit_to_model_settings,
+    mdp_trajectory,
+    run_analysis,
+)
+from dashboard.export import (  # noqa: E402
+    benchmark_csv,
+    pdf_available,
+    policy_report_pdf,
+)
 from dashboard.figures import (  # noqa: E402
     policy_figure,
     trajectory_figure,
@@ -22,19 +33,57 @@ from dashboard.figures import (  # noqa: E402
 st.set_page_config(page_title="StochOpt-MDP", page_icon="📦", layout="wide")
 
 
+def _apply_fit() -> None:
+    """on_click callback: runs before the rerun, so widget state can still be set."""
+    for key, value in fit_to_model_settings(st.session_state["fit_result"]).items():
+        st.session_state[f"demand_{key}"] = value
+
+
+def history_tab(tab) -> None:
+    """CSV upload -> distribution fit -> one-click transfer into the model settings."""
+    with tab:
+        file = st.file_uploader("Günlük satış serisi (CSV)", type=["csv"], key="history_csv")
+        if file is None:
+            st.session_state.pop("fit_result", None)
+            st.caption(
+                "İlk sayısal sütun günlük satış olarak okunur; başlık satırı isteğe bağlıdır."
+            )
+            return
+        try:
+            st.session_state["fit_result"] = fit_from_csv(file.getvalue())
+        except ValueError as e:
+            st.session_state.pop("fit_result", None)
+            st.error(str(e))
+            return
+        fit = st.session_state["fit_result"]
+        label = {"poisson": "Poisson", "negative_binomial": "Negative Binomial"}
+        st.success(f"En iyi model (AIC): {label[fit.distribution_type]}")
+        st.write(
+            f"n = {fit.n}, ortalama = {fit.mu:.2f}, varyans = {fit.variance:.2f}, "
+            f"dağılım indeksi = {fit.dispersion_index:.2f}"
+        )
+        st.json({"aic": fit.aic_scores, "parameters": fit.parameters}, expanded=False)
+        st.button("Model ayarlarına aktar", on_click=_apply_fit, key="apply_fit")
+
+
 def sidebar_request() -> tuple[SimulateRequest | None, list[str]]:
     """Render the sidebar; return the validated request (or the validation errors)."""
-    sb = st.sidebar
+    model_tab, history = st.sidebar.tabs(["Model", "Geçmiş Veri Yükle (CSV)"])
+    history_tab(history)
+    sb = model_tab
     sb.header("Model Parametreleri")
     kind = sb.selectbox(
         "Talep dağılımı",
         ["poisson", "negative_binomial"],
         format_func=lambda k: {"poisson": "Poisson", "negative_binomial": "Negative Binomial"}[k],
+        key="demand_kind",
     )
-    mu = sb.number_input("Ortalama talep μ", value=8.0, step=0.5, format="%.2f")
+    mu = sb.number_input("Ortalama talep μ", value=8.0, step=0.5, format="%.2f", key="demand_mu")
     var = None
     if kind == "negative_binomial":
-        var = sb.number_input("Varyans σ² (> μ)", value=24.0, step=1.0, format="%.2f")
+        var = sb.number_input(
+            "Varyans σ² (> μ)", value=24.0, step=1.0, format="%.2f", key="demand_var"
+        )
 
     sb.header("Maliyetler")
     K = sb.number_input("K — Sabit sipariş maliyeti", value=30.0, step=1.0, format="%.2f")
@@ -87,6 +136,24 @@ def show_policy_tab(a) -> None:
 def show_benchmark_tab(a) -> None:
     st.subheader("Politika karşılaştırması")
     st.dataframe(benchmark_table(a.reports), use_container_width=True)
+    d1, d2 = st.columns(2)
+    d1.download_button(
+        "İndir: Benchmark CSV",
+        data=benchmark_csv(a),
+        file_name="benchmark.csv",
+        mime="text/csv",
+        use_container_width=True,
+    )
+    if pdf_available():
+        d2.download_button(
+            "İndir: Politika Raporu (PDF)",
+            data=policy_report_pdf(a),
+            file_name="inventory_policy_summary.pdf",
+            mime="application/pdf",
+            use_container_width=True,
+        )
+    else:
+        d2.button("İndir: Politika Raporu (PDF)", disabled=True, help="reportlab gerekli")
     mdp, base = a.reports["MDP"].mean("mean_cost"), a.reports["BaseStock"].mean("mean_cost")
     eoq = a.reports["StaticEOQ"].mean("mean_cost")
     st.caption(

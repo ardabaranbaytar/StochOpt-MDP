@@ -65,7 +65,7 @@ def test_figures(analysis):
 def test_app_renders_and_runs_end_to_end():
     at = AppTest.from_file(APP, default_timeout=60).run()
     assert not at.exception
-    assert len(at.tabs) == 3
+    assert len(at.tabs) == 5  # 2 sidebar (Model, CSV) + 3 main
     assert at.button[0].label == "Optimizasyonu ve Simülasyonu Çalıştır"
     assert not at.button[0].disabled
 
@@ -75,6 +75,8 @@ def test_app_renders_and_runs_end_to_end():
     assert metrics["s (sipariş eşiği)"] != "—"
     assert metrics["Saf (s, S) yapısı"].startswith("✅")
     assert "Teorik V*(0)" in metrics
+    labels = {b.label for b in at.get("download_button")}
+    assert {"İndir: Benchmark CSV", "İndir: Politika Raporu (PDF)"} <= labels
 
 
 def test_app_flags_invalid_negative_binomial():

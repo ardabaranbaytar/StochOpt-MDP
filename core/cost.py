@@ -57,9 +57,24 @@ def expected_cost(
     holding: float,
     shortage: float,
     eps: float = 1e-12,
+    lead_time: int = 0,
 ) -> FloatArray:
-    """L(y) = h E[(y-D)^+] + p E[(D-y)^+], vectorised over ``y``."""
+    """L(y) = h E[(y-D)^+] + p E[(D-y)^+], vectorised over ``y``.
+
+    With a deterministic lead time ``lead_time`` = L > 0, ``y`` is the inventory *position*
+    right after ordering.  Stock ordered now arrives L periods later, so the period that its
+    order decision affects ends with net inventory ``y - D_{L+1}``, where D_{L+1} is the
+    (L+1)-fold convolution of one-period demand.  The returned value is then
+
+        L~(y) = h E[(y - D_{L+1})^+] + p E[(D_{L+1} - y)^+]
+
+    (undiscounted; the MDP solver applies the gamma**L discount).  ``lead_time=0`` gives L(y).
+    """
     if holding < 0 or shortage < 0:
         raise ValueError("holding and shortage costs must be >= 0")
+    if lead_time < 0:
+        raise ValueError("lead_time must be >= 0")
+    if lead_time > 0:
+        demand = demand.convolve(lead_time + 1)
     ex, sh = expected_excess_and_shortage(y, demand, eps)
     return holding * ex + shortage * sh

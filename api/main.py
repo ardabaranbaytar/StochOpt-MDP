@@ -13,6 +13,7 @@ from fastapi.responses import JSONResponse
 
 from core import NegativeBinomial, Poisson
 from core.demand import DemandDistribution
+from core.forecasting import fit_demand_distribution
 from core.mdp_solver import MDPSolution, solve_mdp
 from simulation import (
     BaseStockPolicy,
@@ -24,6 +25,8 @@ from simulation import (
 
 from .schemas import (
     DemandConfig,
+    FitDemandRequest,
+    FitDemandResponse,
     OptimizeRequest,
     OptimizeResponse,
     PolicyMetrics,
@@ -163,3 +166,9 @@ async def optimize(req: OptimizeRequest, request: Request) -> OptimizeResponse:
 async def simulate(req: SimulateRequest, request: Request) -> SimulateResponse:
     """Optimize, then benchmark MDP vs base-stock vs static EOQ by Monte Carlo simulation."""
     return await _run_blocking(request, _simulate, req)
+
+
+@app.post("/api/v1/fit-demand", response_model=FitDemandResponse, tags=["forecasting"])
+async def fit_demand(req: FitDemandRequest) -> FitDemandResponse:
+    """Fit Poisson / Negative Binomial to a daily sales history and pick the best by AIC."""
+    return fit_demand_distribution(req.sales)
