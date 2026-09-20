@@ -8,22 +8,27 @@ from functools import partial
 
 import anyio
 import anyio.to_thread
+import numpy as np
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 
 from core import NegativeBinomial, Poisson
 from core.demand import DemandDistribution
 from core.forecasting import fit_demand_distribution
 from core.mdp_solver import MDPSolution, solve_mdp
+from dashboard.compute import run_analysis
+from dashboard.export import benchmark_csv, policy_report_pdf
 from simulation import (
     BaseStockPolicy,
     BenchmarkEngine,
+    InventoryEnvironment,
     MDPPolicy,
     PolicyReport,
     StaticEOQPolicy,
 )
 
 from .schemas import (
+    TRAJECTORY_DAYS,
     DemandConfig,
     FitDemandRequest,
     FitDemandResponse,
@@ -32,6 +37,7 @@ from .schemas import (
     PolicyMetrics,
     SimulateRequest,
     SimulateResponse,
+    Trajectory,
 )
 
 MAX_CONCURRENT_JOBS = 4
@@ -79,6 +85,7 @@ def _solve(req: OptimizeRequest) -> tuple[DemandDistribution, MDPSolution]:
         C=req.bounds.capacity,
         eps=req.bounds.eps,
         max_iter=MAX_VI_ITERATIONS,
+        lead_time=req.bounds.lead_time,
     )
     if not sol.converged:
         raise ValueError(
@@ -113,6 +120,30 @@ def _optimize(req: OptimizeRequest) -> OptimizeResponse:
     )
 
 
+def _trajectory(demand: DemandDistribution, req: SimulateRequest, sol: MDPSolution) -> Trajectory:
+    """MDP-policy path of replication 0, drawn from the same seed stream as the benchmark."""
+    env = InventoryEnvironment(
+        demand,
+        req.cost.holding,
+        req.cost.shortage,
+        req.cost.unit_order,
+        req.cost.setup,
+        lead_time=req.bounds.lead_time,
+        initial_inventory=0,
+    )
+    ss = np.random.SeedSequence(req.seed).spawn(req.replications)[0]
+    res = env.run(MDPPolicy(sol), req.T, np.random.default_rng(ss))
+    n = min(TRAJECTORY_DAYS, req.T)
+    # position after ordering = everything ordered so far - demand of the previous days
+    position = np.cumsum(res.orders) - np.concatenate([[0], np.cumsum(res.demands)[:-1]])
+    return Trajectory(
+        days=list(range(1, n + 1)),
+        inventory=res.inventory_levels[:n].tolist(),
+        position=position[:n].tolist(),
+        orders=res.orders[:n].tolist(),
+    )
+
+
 def _simulate(req: SimulateRequest) -> SimulateResponse:
     demand, sol = _solve(req)
     h, p, c, K = req.cost.holding, req.cost.shortage, req.cost.unit_order, req.cost.setup
@@ -126,13 +157,14 @@ def _simulate(req: SimulateRequest) -> SimulateResponse:
         horizon=req.T,
         n_reps=req.replications,
         seed=req.seed,
+        lead_time=req.bounds.lead_time,
         initial_inventory=0,
     )
     reports = engine.run(
         [
             MDPPolicy(sol),
             BaseStockPolicy.from_newsvendor(demand, h, p),
-            StaticEOQPolicy.from_eoq(demand, h, K),
+            StaticEOQPolicy.from_eoq(demand, h, K, lead_time=req.bounds.lead_time),
         ]
     )
     cmp = engine.compare_with_mdp(sol, reports["MDP"])
@@ -142,6 +174,7 @@ def _simulate(req: SimulateRequest) -> SimulateResponse:
         static_eoq=_metrics(reports["StaticEOQ"]),
         theoretical_cost=cmp["V_x0"],
         simulated_discounted_cost=cmp["sim_discounted"],
+        trajectory=_trajectory(demand, req, sol),
     )
 
 
@@ -172,3 +205,25 @@ async def simulate(req: SimulateRequest, request: Request) -> SimulateResponse:
 async def fit_demand(req: FitDemandRequest) -> FitDemandResponse:
     """Fit Poisson / Negative Binomial to a daily sales history and pick the best by AIC."""
     return fit_demand_distribution(req.sales)
+
+
+@app.post("/api/v1/report/csv", tags=["reports"])
+async def report_csv(req: SimulateRequest, request: Request) -> Response:
+    """Benchmark table + input parameters as a downloadable CSV."""
+    a = await _run_blocking(request, run_analysis, req)
+    return Response(
+        benchmark_csv(a),
+        media_type="text/csv",
+        headers={"Content-Disposition": 'attachment; filename="benchmark.csv"'},
+    )
+
+
+@app.post("/api/v1/report/pdf", tags=["reports"])
+async def report_pdf(req: SimulateRequest, request: Request) -> Response:
+    """One-page Executive Inventory Policy Summary as a downloadable PDF."""
+    a = await _run_blocking(request, run_analysis, req)
+    return Response(
+        policy_report_pdf(a),
+        media_type="application/pdf",
+        headers={"Content-Disposition": 'attachment; filename="inventory_policy_summary.pdf"'},
+    )

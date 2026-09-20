@@ -40,6 +40,7 @@ def input_parameters(a: Analysis) -> list[tuple[str, str]]:
         ("Holding cost (h)", f"{r.cost.holding:g}"),
         ("Shortage cost (p)", f"{r.cost.shortage:g}"),
         ("Discount factor (gamma)", f"{r.bounds.gamma:g}"),
+        ("Lead time (L, days)", str(r.bounds.lead_time)),
         ("Max backlog (B)", str(r.bounds.max_backlog)),
         ("Capacity (C)", str(r.bounds.capacity)),
         ("Horizon (days)", str(r.T)),

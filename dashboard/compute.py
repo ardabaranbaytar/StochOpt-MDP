@@ -55,7 +55,18 @@ def run_analysis(req: SimulateRequest) -> Analysis:
     demand = build_demand(req)
     h, p, c, K = req.cost.holding, req.cost.shortage, req.cost.unit_order, req.cost.setup
     b = req.bounds
-    sol = solve_mdp(demand, h, p, c, K, b.gamma, b.max_backlog, b.capacity, eps=SOLVER_EPS)
+    sol = solve_mdp(
+        demand,
+        h,
+        p,
+        c,
+        K,
+        b.gamma,
+        b.max_backlog,
+        b.capacity,
+        eps=SOLVER_EPS,
+        lead_time=b.lead_time,
+    )
     engine = BenchmarkEngine(
         demand,
         h,
@@ -66,12 +77,13 @@ def run_analysis(req: SimulateRequest) -> Analysis:
         horizon=req.T,
         n_reps=req.replications,
         seed=req.seed,
+        lead_time=b.lead_time,
     )
     reports = engine.run(
         [
             MDPPolicy(sol),
             BaseStockPolicy.from_newsvendor(demand, h, p),
-            StaticEOQPolicy.from_eoq(demand, h, K),
+            StaticEOQPolicy.from_eoq(demand, h, K, lead_time=b.lead_time),
         ]
     )
     return Analysis(req, demand, sol, engine, reports, engine.compare_with_mdp(sol, reports["MDP"]))
@@ -104,13 +116,15 @@ def mdp_trajectory(a: Analysis, replication: int, days: int = 90) -> Trajectory:
         req.cost.shortage,
         req.cost.unit_order,
         req.cost.setup,
+        lead_time=req.bounds.lead_time,
         initial_inventory=0,
     )
     res = env.run(MDPPolicy(a.solution), req.T, np.random.default_rng(ss))
     n = min(days, req.T)
     inv, orders = res.inventory_levels[:n], res.orders[:n]
-    start = np.concatenate([[0], inv[:-1]])  # start-of-day stock (lead time 0)
-    return Trajectory(np.arange(1, n + 1), inv, start + orders, orders)
+    # inventory position after ordering = all orders so far - demand of the previous days
+    position = np.cumsum(res.orders) - np.concatenate([[0], np.cumsum(res.demands)[:-1]])
+    return Trajectory(np.arange(1, n + 1), inv, position[:n], orders)
 
 
 def parse_sales_csv(data: bytes) -> list[int]:

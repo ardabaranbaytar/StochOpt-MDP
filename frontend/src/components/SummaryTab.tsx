@@ -1,0 +1,219 @@
+import { Download, FileText, Gauge, PackageCheck, PiggyBank, SlidersHorizontal } from "lucide-react";
+import { type ReactNode, useState } from "react";
+import { downloadReport, saveBlob } from "@/lib/api";
+import { num, pct, savingsPct } from "@/lib/analysis";
+import type { AnalysisResult, PolicyMetrics } from "@/lib/types";
+import { cn } from "@/lib/utils";
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, type Tone } from "./ui/primitives";
+
+/* ------------------------------------------------------------- KPI card */
+
+export function KpiCard({
+  icon,
+  label,
+  value,
+  sub,
+  tone,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  sub: string;
+  tone: Tone;
+}) {
+  const accent = {
+    emerald: "text-emerald-400",
+    amber: "text-amber-400",
+    sky: "text-sky-400",
+    indigo: "text-indigo-400",
+    rose: "text-rose-400",
+    zinc: "text-zinc-300",
+  }[tone];
+  return (
+    <Card className="relative overflow-hidden">
+      <CardContent className="p-5">
+        <div className="flex items-center justify-between text-xs text-zinc-400">
+          <span>{label}</span>
+          <span className={accent}>{icon}</span>
+        </div>
+        <div className={cn("tabular mt-3 text-3xl font-semibold tracking-tight", accent)} data-testid="kpi-value">
+          {value}
+        </div>
+        <p className="mt-1 text-xs text-zinc-500">{sub}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ------------------------------------------------------ benchmark table */
+
+const ROWS: { key: "mdp" | "basestock" | "static_eoq"; name: string; tone: Tone }[] = [
+  { key: "mdp", name: "MDP (s, S)", tone: "emerald" },
+  { key: "basestock", name: "Base-Stock", tone: "amber" },
+  { key: "static_eoq", name: "Static EOQ", tone: "sky" },
+];
+
+export function BenchmarkTable({ data }: { data: AnalysisResult["simulate"] }) {
+  const best = Math.min(...ROWS.map((r) => data[r.key].mean_cost));
+  const cell = "px-4 py-3 text-right tabular";
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Policy benchmark</CardTitle>
+        <CardDescription>
+          Mean over Monte Carlo replications on common random numbers (± standard error).
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="overflow-x-auto p-0 pb-2">
+        <table className="w-full min-w-[640px] text-sm">
+          <thead>
+            <tr className="border-b border-zinc-800 text-[11px] uppercase tracking-wider text-zinc-500">
+              <th className="px-4 py-2 text-left font-medium">Policy</th>
+              <th className="px-4 py-2 text-right font-medium">Mean cost ± SE</th>
+              <th className="px-4 py-2 text-right font-medium">CSL</th>
+              <th className="px-4 py-2 text-right font-medium">Fill rate</th>
+              <th className="px-4 py-2 text-right font-medium">Stockout days</th>
+              <th className="px-4 py-2 text-right font-medium">Avg. on-hand</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ROWS.map(({ key, name, tone }) => {
+              const m: PolicyMetrics = data[key];
+              return (
+                <tr key={key} className="border-b border-zinc-800/60 last:border-0 hover:bg-zinc-800/30">
+                  <td className="px-4 py-3">
+                    <Badge tone={tone}>{name}</Badge>
+                  </td>
+                  <td className={cn(cell, m.mean_cost === best && "font-semibold text-emerald-300")}>
+                    {num(m.mean_cost, 3)} <span className="text-zinc-500">± {num(m.cost_stderr, 3)}</span>
+                  </td>
+                  <td className={cell}>{pct(m.csl)}</td>
+                  <td className={cell}>{pct(m.fill_rate)}</td>
+                  <td className={cn(cell, "text-rose-300")}>{pct(m.stockout_days_ratio)}</td>
+                  <td className={cell}>{num(m.mean_on_hand)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ----------------------------------------------------------- export bar */
+
+export function ExportBar({ request }: { request: AnalysisResult["request"] }) {
+  const [busy, setBusy] = useState<"csv" | "pdf" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run(kind: "csv" | "pdf") {
+    setBusy(kind);
+    setError(null);
+    try {
+      saveBlob(
+        await downloadReport(kind, request),
+        kind === "csv" ? "benchmark.csv" : "inventory_policy_summary.pdf",
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Export failed.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <Card>
+      <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+        <div>
+          <p className="text-sm font-medium text-zinc-100">Reports</p>
+          <p className="text-xs text-zinc-500">Generated by the API from the parameters above.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button loading={busy === "csv"} disabled={busy !== null} onClick={() => void run("csv")}>
+            {busy !== "csv" && <Download className="h-4 w-4" aria-hidden />} Export Benchmark CSV
+          </Button>
+          <Button loading={busy === "pdf"} disabled={busy !== null} onClick={() => void run("pdf")}>
+            {busy !== "pdf" && <FileText className="h-4 w-4" aria-hidden />} Download Executive Report (PDF)
+          </Button>
+        </div>
+        {error && (
+          <p role="alert" className="w-full text-xs text-rose-400">
+            {error}
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+/* ------------------------------------------------------------------ tab */
+
+export function SummaryTab({ result }: { result: AnalysisResult }) {
+  const { optimize: opt, simulate: sim, request } = result;
+  const vsBase = savingsPct(sim.mdp, sim.basestock);
+  const vsEoq = savingsPct(sim.mdp, sim.static_eoq);
+  const L = request.bounds.lead_time;
+  const gap = sim.simulated_discounted_cost - sim.theoretical_cost;
+
+  return (
+    <div className="space-y-5">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <KpiCard
+          icon={<PiggyBank className="h-5 w-5" />}
+          label="Total cost savings vs Base-Stock"
+          value={`${vsBase >= 0 ? "" : "−"}${Math.abs(vsBase).toFixed(1)}%`}
+          sub={`${vsEoq.toFixed(1)}% vs Static EOQ`}
+          tone={vsBase >= 0 ? "emerald" : "rose"}
+        />
+        <KpiCard
+          icon={<SlidersHorizontal className="h-5 w-5" />}
+          label={L > 0 ? "Policy (s, S) on inventory position" : "Computed policy (s, S)"}
+          value={opt.s === null ? "—" : `(${opt.s}, ${opt.S})`}
+          sub={
+            opt.s === null
+              ? "Never orders within the state space"
+              : `Order band S − s = ${(opt.S ?? 0) - opt.s}${opt.is_s_S_optimal ? "" : " · not a pure (s, S)"}`
+          }
+          tone="amber"
+        />
+        <KpiCard
+          icon={<Gauge className="h-5 w-5" />}
+          label="Cycle service level"
+          value={pct(sim.mdp.csl)}
+          sub={`Stockout days ${pct(sim.mdp.stockout_days_ratio)}`}
+          tone="sky"
+        />
+        <KpiCard
+          icon={<PackageCheck className="h-5 w-5" />}
+          label="Fill rate"
+          value={pct(sim.mdp.fill_rate)}
+          sub={`Average on-hand ${num(sim.mdp.mean_on_hand)} units`}
+          tone="emerald"
+        />
+      </div>
+
+      <BenchmarkTable data={sim} />
+
+      <Card>
+        <CardContent className="flex flex-wrap items-center gap-x-8 gap-y-2 p-4 text-xs text-zinc-400">
+          <span>
+            Theoretical V*(0): <b className="tabular text-zinc-200">{num(sim.theoretical_cost)}</b>
+          </span>
+          <span>
+            Simulated discounted cost:{" "}
+            <b className="tabular text-zinc-200">{num(sim.simulated_discounted_cost)}</b>{" "}
+            <span className="tabular text-zinc-500">({gap >= 0 ? "+" : ""}{num(gap)})</span>
+          </span>
+          {L > 0 && (
+            <Badge tone="amber">
+              L = {L}: V* excludes the first {L} day(s) of sunk costs, so the two agree only approximately
+            </Badge>
+          )}
+        </CardContent>
+      </Card>
+
+      <ExportBar request={request} />
+    </div>
+  );
+}

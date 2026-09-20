@@ -149,7 +149,7 @@ poetry run streamlit run dashboard/app.py
 
 ### Docker ile Çalıştırma
 
-Docker ve Docker Compose kurulu olmalıdır. Her iki servis aynı `stochopt-net` bridge ağı üzerinde çalışır.
+Docker ve Docker Compose kurulu olmalıdır. Üç servis (`api`, `dashboard`, `frontend`) aynı `stochopt-net` bridge ağı üzerinde çalışır.
 
 ```bash
 # 1. imajı derle ve servisleri başlat
@@ -160,7 +160,8 @@ docker compose ps
 
 # 3. erişim
 #    REST API   ->  http://localhost:8000/docs   (sağlık: http://localhost:8000/health)
-#    dashboard  ->  http://localhost:8501
+#    dashboard  ->  http://localhost:8501   (Streamlit)
+#    frontend   ->  http://localhost:3000   (React, nginx proxies /api to the API)
 
 # 4. logları izle / durdur
 docker compose logs -f
@@ -169,6 +170,24 @@ docker compose down
 
 İmaj `python:3.11-slim` tabanlı multi-stage build ile oluşturulur (Poetry yalnızca build aşamasında
 bulunur) ve konteynerler root olmayan `appuser` kullanıcısı ile çalışır.
+
+### Web frontend (React)
+
+`frontend/` is a Vite + React + TypeScript app (Tailwind CSS v4, Recharts, Lucide) that talks to the
+FastAPI service. The Streamlit dashboard is unchanged.
+
+```bash
+poetry run uvicorn api.main:app --reload      # terminal 1: API on :8000
+cd frontend && npm install && npm run dev      # terminal 2: UI on http://localhost:3000 (proxies /api)
+
+npm run typecheck   # tsc --noEmit
+npm test            # vitest
+npm run build       # type-check + production bundle in frontend/dist
+```
+
+Tabs: *Executive Summary* (KPIs, benchmark, CSV / PDF export), *Policy & Value Function* (V*(x), π*(x)
+with s / S markers) and *Monte Carlo Trajectory* (90-day path of one replication). With `docker compose`
+the built bundle is served by unprivileged nginx on port 3000.
 
 ### Library
 
@@ -217,7 +236,8 @@ exceed it returns **400** instead of running unbounded); at most 4 heavy jobs ru
 core/         demand.py  cost.py  mdp_solver.py
 simulation/   environment.py  benchmark.py
 api/          schemas.py  main.py
-dashboard/    app.py  compute.py  figures.py
+dashboard/    app.py  compute.py  figures.py  export.py
+frontend/     Vite + React + TS web UI (Dockerfile, nginx.conf)
 tests/        test_core  test_mdp_solver  test_simulation  test_api  test_dashboard
 ```
 
@@ -225,8 +245,9 @@ tests/        test_core  test_mdp_solver  test_simulation  test_api  test_dashbo
 
 ## Limitations
 
-* The MDP assumes **zero lead time**. The simulator supports $L > 0$ (pipeline queue, inventory-position
-  policies), but `MDPPolicy` is not optimal in that case; that needs the pipeline in the state.
+* Lead time $L \ge 0$ is deterministic and handled by reducing to the inventory position (the policy
+  acts on net inventory + on-order). The theoretical $V^*(0)$ then omits the sunk costs of the first $L$
+  days, so it matches the simulation only approximately.
 * The state space is truncated at $[-B, C]$: demand beyond $-B$ backlog is absorbed at $-B$, and orders cannot exceed
   capacity $C$. Choose $B$ and $C$ large relative to the demand scale.
 * The benchmark heuristics are intentionally simple: Base-Stock uses the classical newsvendor fractile

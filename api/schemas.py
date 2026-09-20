@@ -11,6 +11,8 @@ from core.forecasting import DemandFitResult
 MAX_STATES = 1_000  # per side of the state space (B and C)
 MAX_SIM_STEPS = 1_000_000  # T * replications
 MAX_SALES_POINTS = 100_000
+MAX_LEAD_TIME = 30
+TRAJECTORY_DAYS = 90
 
 
 class DemandConfig(BaseModel):
@@ -53,6 +55,13 @@ class SystemBounds(BaseModel):
     capacity: int = Field(default=80, ge=1, le=MAX_STATES, description="C: highest state / S cap.")
     gamma: float = Field(default=0.95, gt=0, le=0.995, description="Discount factor.")
     eps: float = Field(default=1e-4, ge=1e-8, le=1, description="Value-iteration tolerance.")
+    lead_time: int = Field(
+        default=0,
+        ge=0,
+        le=MAX_LEAD_TIME,
+        description="Deterministic lead time L in periods; the (s, S) policy then acts on the "
+        "inventory position (net inventory + on-order).",
+    )
 
 
 class OptimizeRequest(BaseModel):
@@ -95,6 +104,15 @@ class PolicyMetrics(BaseModel):
     mean_on_hand: float
 
 
+class Trajectory(BaseModel):
+    """One replication of the MDP policy, on the same demand stream as the benchmark."""
+
+    days: list[int]
+    inventory: list[int] = Field(description="End-of-day net inventory.")
+    position: list[int] = Field(description="Inventory position right after ordering.")
+    orders: list[int]
+
+
 class SimulateResponse(BaseModel):
     mdp: PolicyMetrics
     basestock: PolicyMetrics
@@ -103,6 +121,7 @@ class SimulateResponse(BaseModel):
     simulated_discounted_cost: float = Field(
         description="Simulated mean discounted cost of the MDP policy from x0=0 (compare to V*(0))."
     )
+    trajectory: Trajectory = Field(description="First replication of the MDP policy (90 days).")
 
 
 class FitDemandRequest(BaseModel):

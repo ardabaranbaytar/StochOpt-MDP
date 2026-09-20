@@ -12,3 +12,5 @@ htmlcov
 .env
 tests
 docs
+
+frontend
