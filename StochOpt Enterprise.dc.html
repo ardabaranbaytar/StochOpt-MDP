@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; background:#F8FAFC; -webkit-font-smoothing:antialiased; }
+
+  a { color:#2563EB; text-decoration:none; }
+  a:hover { color:#1D4ED8; text-decoration:underline; }
+  input { font-family:'IBM Plex Mono', ui-monospace, Menlo, monospace; }
+</style>
+</helmet>
+
+<div style="min-height:100vh; background:#F8FAFC; font-family:'Public Sans', ui-sans-serif, Helvetica, Arial, sans-serif; color:#0F172A; position:relative;">
+
+
+  <header style="position:sticky; top:0; z-index:20; background:rgba(255,255,255,0.94); backdrop-filter:blur(8px); border-bottom:1px solid #E2E8F0;">
+    <div style="max-width:1560px; margin:0 auto; padding:0 24px; height:68px; display:flex; align-items:center; gap:18px;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:32px; height:32px; border-radius:8px; background:{{ accent }}; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 10px rgba(2,132,199,0.45);">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg>
+        </div>
+        <span style="font-size:16px; font-weight:700; letter-spacing:-0.01em; color:#0F172A;">StochOpt Enterprise</span>
+        <span style="font-family:'IBM Plex Mono', monospace; font-size:11px; color:#475569; background:#F1F5F9; border:1px solid #E2E8F0; border-radius:5px; padding:3px 7px;">v1.5.0</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:7px; padding:4px 10px; border-radius:999px; background:#ECFDF5; border:1px solid #A7F3D0;">
+        <span style="width:7px; height:7px; border-radius:50%; background:#10B981; box-shadow:0 0 0 3px rgba(16,185,129,0.18);"></span>
+        <span style="font-size:12px; font-weight:600; color:#047857;">API Online</span>
+      </div>
+      <div style="flex:1;"></div>
+      <nav style="display:flex; align-items:center; gap:18px;">
+        <a href="#" style="font-size:13px; font-weight:500; color:#475569; display:flex; align-items:center; gap:6px;" style-hover="color:#2563EB;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path></svg>
+          Docs
+        </a>
+        <a href="#" style="font-size:13px; font-weight:500; color:#475569; display:flex; align-items:center; gap:6px;" style-hover="color:#2563EB;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.4 5.4 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"></path><path d="M9 18c-4.51 2-5-2-7-2"></path></svg>
+          GitHub
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <div style="position:relative; z-index:1; max-width:1560px; margin:0 auto; padding:20px 24px 48px; display:grid; grid-template-columns:302px minmax(0,1fr); gap:20px; align-items:start;">
+
+    <aside style="background:#fff; border:1px solid rgba(226,232,240,0.8); border-radius:12px; box-shadow:0 1px 2px rgba(15,23,42,0.05); align-self:stretch; display:flex; flex-direction:column;">
+      <div style="padding:14px 16px; border-bottom:1px solid #F1F5F9; display:flex; align-items:center; gap:8px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="4" y1="21" y2="14"></line><line x1="4" x2="4" y1="10" y2="3"></line><line x1="12" x2="12" y1="21" y2="12"></line><line x1="12" x2="12" y1="8" y2="3"></line><line x1="20" x2="20" y1="21" y2="16"></line><line x1="20" x2="20" y1="12" y2="3"></line><line x1="1" x2="7" y1="14" y2="14"></line><line x1="9" x2="15" y1="8" y2="8"></line><line x1="17" x2="23" y1="16" y2="16"></line></svg>
+        <span style="font-size:13px; font-weight:600; color:#0F172A;">Parameter Cockpit</span>
+      </div>
+
+      <div style="padding:16px; display:flex; flex-direction:column; gap:16px; flex:1; justify-content:space-between;">
+
+        <div>
+          <div style="font-size:11px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:#64748B; margin-bottom:8px;">Demand Distribution</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+            <button onClick="{{ setPoisson }}" style="{{ poissonBtn }}">Poisson</button>
+            <button onClick="{{ setNegBin }}" style="{{ negbinBtn }}">NegBin</button>
+          </div>
+          <div style="margin-top:8px; font-family:'IBM Plex Mono', monospace; font-size:11px; color:#64748B; line-height:1.5;">
+            E[D] = {{ demandMean }} &nbsp;·&nbsp; Var[D] = {{ demandVar }}
+          </div>
+        </div>
+
+        <div>
+          <div style="font-size:11px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:#64748B; margin-bottom:8px;">Cost Parameters</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <label style="display:flex; flex-direction:column; gap:4px;">
+              <span style="font-size:11px; color:#475569;">K · setup</span>
+              <input type="number" value="{{ K }}" onChange="{{ onK }}" style="width:100%; box-sizing:border-box; padding:9px 9px; font-size:13px; font-weight:600; color:#0F172A; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:7px; outline:none;" style-focus="border-color:#2563EB; background:#fff;">
+            </label>
+            <label style="display:flex; flex-direction:column; gap:4px;">
+              <span style="font-size:11px; color:#475569;">c · unit</span>
+              <input type="number" value="{{ c }}" onChange="{{ onC }}" style="width:100%; box-sizing:border-box; padding:9px 9px; font-size:13px; font-weight:600; color:#0F172A; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:7px; outline:none;" style-focus="border-color:#2563EB; background:#fff;">
+            </label>
+            <label style="display:flex; flex-direction:column; gap:4px;">
+              <span style="font-size:11px; color:#475569;">h · holding</span>
+              <input type="number" value="{{ h }}" onChange="{{ onH }}" style="width:100%; box-sizing:border-box; padding:9px 9px; font-size:13px; font-weight:600; color:#0F172A; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:7px; outline:none;" style-focus="border-color:#2563EB; background:#fff;">
+            </label>
+            <label style="display:flex; flex-direction:column; gap:4px;">
+              <span style="font-size:11px; color:#475569;">p · shortage</span>
+              <input type="number" value="{{ p }}" onChange="{{ onP }}" style="width:100%; box-sizing:border-box; padding:9px 9px; font-size:13px; font-weight:600; color:#0F172A; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:7px; outline:none;" style-focus="border-color:#2563EB; background:#fff;">
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-size:11px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:#64748B; margin-bottom:8px;">MDP Parameters</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <label style="display:flex; flex-direction:column; gap:4px;">
+              <span style="font-size:11px; color:#475569;">γ · discount</span>
+              <input type="number" step="0.01" value="{{ gamma }}" onChange="{{ onGamma }}" style="width:100%; box-sizing:border-box; padding:9px 9px; font-size:13px; font-weight:600; color:#0F172A; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:7px; outline:none;" style-focus="border-color:#2563EB; background:#fff;">
+            </label>
+            <label style="display:flex; flex-direction:column; gap:4px;">
+              <span style="font-size:11px; color:#475569;">L · lead time</span>
+              <input type="number" value="{{ L }}" onChange="{{ onL }}" style="width:100%; box-sizing:border-box; padding:9px 9px; font-size:13px; font-weight:600; color:#0F172A; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:7px; outline:none;" style-focus="border-color:#2563EB; background:#fff;">
+            </label>
+            <label style="display:flex; flex-direction:column; gap:4px;">
+              <span style="font-size:11px; color:#475569;">B · backlog</span>
+              <input type="number" value="{{ B }}" onChange="{{ onB }}" style="width:100%; box-sizing:border-box; padding:9px 9px; font-size:13px; font-weight:600; color:#0F172A; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:7px; outline:none;" style-focus="border-color:#2563EB; background:#fff;">
+            </label>
+            <label style="display:flex; flex-direction:column; gap:4px;">
+              <span style="font-size:11px; color:#475569;">C · capacity</span>
+              <input type="number" value="{{ Cap }}" onChange="{{ onCap }}" style="width:100%; box-sizing:border-box; padding:9px 9px; font-size:13px; font-weight:600; color:#0F172A; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:7px; outline:none;" style-focus="border-color:#2563EB; background:#fff;">
+            </label>
+          </div>
+        </div>
+
+        <button onClick="{{ run }}" style="{{ runBtn }}">
+          {{ runLabel }}
+        </button>
+
+        <div style="font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:#94A3B8; line-height:1.6; border-top:1px solid #F1F5F9; padding-top:12px;">
+          solver: value-iteration<br>
+          states: {{ stateCount }} · horizon: {{ simDaysLabel }}d<br>
+          last run: {{ lastRun }}
+        </div>
+      </div>
+    </aside>
+
+    <main style="display:flex; flex-direction:column; gap:20px; min-width:0;">
+
+      <section style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px,1fr)); gap:16px;">
+
+        <div style="background:#fff; border:1px solid rgba(226,232,240,0.8); border-radius:12px; box-shadow:0 1px 2px rgba(15,23,42,0.05); padding:18px; transition:box-shadow .15s ease, border-color .15s ease;" style-hover="box-shadow:0 2px 8px rgba(15,23,42,0.08); border-color:#CBD5E1;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <span style="font-size:12.5px; color:#64748B; font-weight:500;">Total Cost Reduction</span>
+            <span style="font-size:11px; font-weight:600; color:#15803D; background:#F0FDF4; border:1px solid #BBF7D0; border-radius:999px; padding:2px 8px;">vs EOQ</span>
+          </div>
+          <div style="margin-top:10px; display:flex; align-items:baseline; gap:8px;">
+            <span style="font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:30px; letter-spacing:-0.02em; color:#0F172A;">{{ costRed }}</span>
+            <span style="font-size:12px; font-weight:600; color:#15803D;">▲ optimal</span>
+          </div>
+          <svg viewBox="0 0 240 40" preserveAspectRatio="none" style="width:100%; height:40px; margin-top:10px; display:block;">
+            <polyline points="{{ sparkBase }}" fill="none" stroke="#CBD5E1" stroke-width="1.5"></polyline>
+            <polyline points="{{ sparkMdp }}" fill="none" stroke="#2563EB" stroke-width="2"></polyline>
+          </svg>
+          <div style="font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:#94A3B8; margin-top:2px;">Bellman residual convergence</div>
+        </div>
+
+        <div style="background:#fff; border:1px solid rgba(226,232,240,0.8); border-radius:12px; box-shadow:0 1px 2px rgba(15,23,42,0.05); padding:18px; transition:box-shadow .15s ease, border-color .15s ease;" style-hover="box-shadow:0 2px 8px rgba(15,23,42,0.08); border-color:#CBD5E1;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <span style="font-size:12.5px; color:#64748B; font-weight:500;">Computed Policy</span>
+            <span style="font-size:11px; font-weight:600; color:#1D4ED8; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:999px; padding:2px 8px;">(s, S)</span>
+          </div>
+          <div style="margin-top:10px; display:flex; align-items:baseline; gap:10px;">
+            <span style="font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:30px; letter-spacing:-0.02em; color:#0F172A;">s={{ sVal }}</span>
+            <span style="font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:30px; letter-spacing:-0.02em; color:#0F172A;">S={{ SVal }}</span>
+          </div>
+          <div style="margin-top:14px; height:8px; border-radius:999px; background:#F1F5F9; position:relative; overflow:hidden;">
+            <div style="{{ bandBarStyle }}"></div>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:#94A3B8; margin-top:6px;">
+            <span>order band {{ bandSize }} units</span>
+            <span>cap {{ Cap }}</span>
+          </div>
+        </div>
+
+        <div style="background:#fff; border:1px solid rgba(226,232,240,0.8); border-radius:12px; box-shadow:0 1px 2px rgba(15,23,42,0.05); padding:18px; transition:box-shadow .15s ease, border-color .15s ease;" style-hover="box-shadow:0 2px 8px rgba(15,23,42,0.08); border-color:#CBD5E1;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <span style="font-size:12.5px; color:#64748B; font-weight:500;">Cycle Service Level</span>
+            <span style="font-size:11px; font-weight:600; color:#475569; background:#F1F5F9; border:1px solid #E2E8F0; border-radius:999px; padding:2px 8px;">CSL</span>
+          </div>
+          <div style="margin-top:10px;">
+            <span style="font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:30px; letter-spacing:-0.02em; color:#0F172A;">{{ cslPct }}</span>
+          </div>
+          <div style="margin-top:14px; height:8px; border-radius:999px; background:#F1F5F9; overflow:hidden;">
+            <div style="{{ cslBarStyle }}"></div>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:#94A3B8; margin-top:6px;">
+            <span>no-stockout cycles</span>
+            <span>target 95%</span>
+          </div>
+        </div>
+
+        <div style="background:#fff; border:1px solid rgba(226,232,240,0.8); border-radius:12px; box-shadow:0 1px 2px rgba(15,23,42,0.05); padding:18px; transition:box-shadow .15s ease, border-color .15s ease;" style-hover="box-shadow:0 2px 8px rgba(15,23,42,0.08); border-color:#CBD5E1;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <span style="font-size:12.5px; color:#64748B; font-weight:500;">Fill Rate</span>
+            <span style="font-size:11px; font-weight:600; color:#15803D; background:#F0FDF4; border:1px solid #BBF7D0; border-radius:999px; padding:2px 8px;">β-service</span>
+          </div>
+          <div style="margin-top:10px;">
+            <span style="font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:30px; letter-spacing:-0.02em; color:#0F172A;">{{ fillPct }}</span>
+          </div>
+          <div style="margin-top:14px; display:flex; flex-wrap:wrap; gap:6px;">
+            <span style="font-family:'IBM Plex Mono', monospace; font-size:11px; color:#475569; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; padding:3px 8px;">avg on-hand {{ avgOnHand }}</span>
+            <span style="font-family:'IBM Plex Mono', monospace; font-size:11px; color:#475569; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; padding:3px 8px;">backorders {{ backorders }}</span>
+          </div>
+        </div>
+      </section>
+
+      <section style="background:#fff; border:1px solid rgba(226,232,240,0.8); border-radius:12px; box-shadow:0 1px 2px rgba(15,23,42,0.05); min-width:0;">
+        <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px; padding:9px 16px; border-bottom:1px solid #F1F5F9;">
+          <button onClick="{{ tabExec }}" style="{{ tabExecStyle }}">Executive Summary</button>
+          <button onClick="{{ tabPolicy }}" style="{{ tabPolicyStyle }}">Policy Explorer</button>
+          <button onClick="{{ tabSim }}" style="{{ tabSimStyle }}">Monte Carlo Trajectory</button>
+        </div>
+
+        <sc-if value="{{ isExec }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:20px;">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:16px;">
+              <div>
+                <div style="font-size:14px; font-weight:600; color:#0F172A;">Benchmark Comparison</div>
+                <div style="font-size:12.5px; color:#64748B; margin-top:2px;">Common demand stream, {{ simDaysLabel }} periods, identical cost structure.</div>
+              </div>
+              <div style="display:flex; gap:8px;">
+                <button onClick="{{ exportCsv }}" style="display:flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; color:#334155; background:#fff; border:1px solid #E2E8F0; border-radius:8px; padding:7px 12px; cursor:pointer;" style-hover="background:#F8FAFC; border-color:#CBD5E1;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" x2="12" y1="15" y2="3"></line></svg>
+                  Export CSV
+                </button>
+                <button onClick="{{ exportPdf }}" style="display:flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; color:#334155; background:#fff; border:1px solid #E2E8F0; border-radius:8px; padding:7px 12px; cursor:pointer;" style-hover="background:#F8FAFC; border-color:#CBD5E1;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"></path><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect width="12" height="8" x="6" y="14"></rect></svg>
+                  Export PDF
+                </button>
+              </div>
+            </div>
+
+            <div style="overflow-x:auto; border:1px solid #E2E8F0; border-radius:10px;">
+              <table style="width:100%; border-collapse:collapse; font-size:13px; min-width:660px;">
+                <thead>
+                  <tr style="background:#F8FAFC;">
+                    <th style="text-align:left; padding:10px 14px; font-size:11px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:#64748B; border-bottom:1px solid #E2E8F0;">Policy</th>
+                    <th style="text-align:right; padding:10px 14px; font-size:11px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:#64748B; border-bottom:1px solid #E2E8F0;">Avg Cost / Period</th>
+                    <th style="text-align:right; padding:10px 14px; font-size:11px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:#64748B; border-bottom:1px solid #E2E8F0;">Total Cost</th>
+                    <th style="text-align:right; padding:10px 14px; font-size:11px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:#64748B; border-bottom:1px solid #E2E8F0;">CSL</th>
+                    <th style="text-align:right; padding:10px 14px; font-size:11px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:#64748B; border-bottom:1px solid #E2E8F0;">Fill Rate</th>
+                    <th style="text-align:right; padding:10px 14px; font-size:11px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:#64748B; border-bottom:1px solid #E2E8F0;">Orders</th>
+                    <th style="text-align:right; padding:10px 14px; font-size:11px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:#64748B; border-bottom:1px solid #E2E8F0;">Δ vs EOQ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <sc-for list="{{ rows }}" as="r" hint-placeholder-count="3">
+                    <tr>
+                      <td style="padding:12px 14px; border-bottom:1px solid #F1F5F9;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                          <span style="{{ r.badge }}">{{ r.tag }}</span>
+                          <span style="font-weight:600; color:#0F172A;">{{ r.name }}</span>
+                        </div>
+                        <div style="font-family:'IBM Plex Mono', monospace; font-size:11px; color:#94A3B8; margin-top:3px;">{{ r.spec }}</div>
+                      </td>
+                      <td style="padding:12px 14px; border-bottom:1px solid #F1F5F9; text-align:right; font-family:'IBM Plex Mono', monospace; font-weight:700; color:#0F172A;">{{ r.avg }}</td>
+                      <td style="padding:12px 14px; border-bottom:1px solid #F1F5F9; text-align:right; font-family:'IBM Plex Mono', monospace; color:#334155;">{{ r.total }}</td>
+                      <td style="padding:12px 14px; border-bottom:1px solid #F1F5F9; text-align:right; font-family:'IBM Plex Mono', monospace; color:#334155;">{{ r.csl }}</td>
+                      <td style="padding:12px 14px; border-bottom:1px solid #F1F5F9; text-align:right; font-family:'IBM Plex Mono', monospace; color:#334155;">{{ r.fill }}</td>
+                      <td style="padding:12px 14px; border-bottom:1px solid #F1F5F9; text-align:right; font-family:'IBM Plex Mono', monospace; color:#334155;">{{ r.orders }}</td>
+                      <td style="padding:12px 14px; border-bottom:1px solid #F1F5F9; text-align:right;"><span style="{{ r.deltaBadge }}">{{ r.delta }}</span></td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+
+            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-top:16px;">
+              <div style="border:1px solid #E2E8F0; border-radius:10px; padding:14px; background:#F8FAFC;">
+                <div style="font-size:11px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:#64748B;">Optimality gap</div>
+                <div style="font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:20px; color:#0F172A; margin-top:6px;">{{ gap }}</div>
+                <div style="font-size:12px; color:#64748B; margin-top:4px;">Bellman residual at termination.</div>
+              </div>
+              <div style="border:1px solid #E2E8F0; border-radius:10px; padding:14px; background:#F8FAFC;">
+                <div style="font-size:11px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:#64748B;">Solve time</div>
+                <div style="font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:20px; color:#0F172A; margin-top:6px;">{{ solveMs }}</div>
+                <div style="font-size:12px; color:#64748B; margin-top:4px;">{{ sweeps }} sweeps over {{ stateCount }} states.</div>
+              </div>
+              <div style="border:1px solid #E2E8F0; border-radius:10px; padding:14px; background:#F8FAFC;">
+                <div style="font-size:11px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:#64748B;">Expected discounted cost</div>
+                <div style="font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:20px; color:#0F172A; margin-top:6px;">{{ v0 }}</div>
+                <div style="font-size:12px; color:#64748B; margin-top:4px;">V*(0) under γ = {{ gamma }}.</div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isPolicy }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:20px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:8px;">
+              <div>
+                <div style="font-size:14px; font-weight:600; color:#0F172A;">V*(x) and the optimal decision rule</div>
+                <div style="font-size:12.5px; color:#64748B; margin-top:2px;">Hover the chart to inspect a state.</div>
+              </div>
+              <div style="display:flex; gap:14px; font-size:12px; color:#475569; align-items:center;">
+                <span style="display:flex; align-items:center; gap:6px;"><span style="width:14px; height:2.5px; background:#2563EB; display:inline-block;"></span>V*(x)</span>
+                <span style="display:flex; align-items:center; gap:6px;"><span style="width:10px; height:10px; background:#93C5FD; display:inline-block; border-radius:2px;"></span>order qty μ*(x)</span>
+              </div>
+            </div>
+
+            <div style="position:relative; border-radius:10px; padding:6px 4px; background:#fff; border:1px solid #F1F5F9;">
+            <svg viewBox="0 0 900 300" preserveAspectRatio="none" onMouseMove="{{ onHover }}" onMouseLeave="{{ offHover }}" style="width:100%; height:300px; display:block; cursor:crosshair;">
+              <sc-for list="{{ gridY }}" as="g" hint-placeholder-count="4">
+                <line x1="48" x2="890" y1="{{ g.y }}" y2="{{ g.y }}" stroke="#F1F5F9" stroke-width="1"></line>
+              </sc-for>
+              <sc-for list="{{ qBars }}" as="b" hint-placeholder-count="20">
+                <rect x="{{ b.x }}" y="{{ b.y }}" width="{{ b.w }}" height="{{ b.h }}" fill="#BFDBFE" rx="1"></rect>
+              </sc-for>
+              <line x1="{{ sX }}" x2="{{ sX }}" y1="14" y2="252" stroke="#DC2626" stroke-width="1.5" stroke-dasharray="4 4"></line>
+              <line x1="{{ SX }}" x2="{{ SX }}" y1="14" y2="252" stroke="#16A34A" stroke-width="1.5" stroke-dasharray="4 4"></line>
+              <polyline points="{{ vPoints }}" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-linejoin="round"></polyline>
+              <line x1="48" x2="890" y1="252" y2="252" stroke="#CBD5E1" stroke-width="1"></line>
+            </svg>
+            <sc-for list="{{ xTicks }}" as="t" hint-placeholder-count="6">
+              <div style="{{ t.style }}">{{ t.label }}</div>
+            </sc-for>
+            <sc-for list="{{ yTicks }}" as="t" hint-placeholder-count="4">
+              <div style="{{ t.style }}">{{ t.label }}</div>
+            </sc-for>
+            <div style="{{ sTagStyle }}">{{ sTag }}</div>
+            <div style="{{ STagStyle }}">{{ STag }}</div>
+            </div>
+
+            <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; font-family:'IBM Plex Mono', monospace; font-size:12px;">
+              <span style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:7px; padding:6px 10px; color:#334155;">{{ hoverText }}</span>
+              <span style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:7px; padding:6px 10px; color:#334155;">rule: order (S − x) if x ≤ s, else 0</span>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isSim }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:20px;">
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:8px;">
+              <div>
+                <div style="font-size:14px; font-weight:600; color:#0F172A;">Inventory trajectory · {{ simDaysLabel }} days</div>
+                <div style="font-size:12.5px; color:#64748B; margin-top:2px;">Single Monte Carlo path of the on-hand position under the computed policy.</div>
+              </div>
+              <div style="display:flex; gap:14px; font-size:12px; color:#475569; align-items:center;">
+                <span style="display:flex; align-items:center; gap:6px;"><span style="width:14px; height:2.5px; background:#2563EB; display:inline-block;"></span>x<sub>t</sub></span>
+                <span style="display:flex; align-items:center; gap:6px;"><span style="width:14px; height:2px; background:#DC2626; display:inline-block;"></span>s</span>
+                <span style="display:flex; align-items:center; gap:6px;"><span style="width:14px; height:2px; background:#16A34A; display:inline-block;"></span>S</span>
+              </div>
+            </div>
+
+            <div style="position:relative; border-radius:10px; padding:6px 4px; background:#fff; border:1px solid #F1F5F9;">
+            <svg viewBox="0 0 900 320" preserveAspectRatio="none" style="width:100%; height:320px; display:block;">
+              <sc-for list="{{ simGridY }}" as="g" hint-placeholder-count="5">
+                <line x1="48" x2="890" y1="{{ g.y }}" y2="{{ g.y }}" stroke="#F1F5F9" stroke-width="1"></line>
+              </sc-for>
+              <rect x="48" y="{{ negY }}" width="842" height="{{ negH }}" fill="#FEF2F2"></rect>
+              <line x1="48" x2="890" y1="{{ zeroY }}" y2="{{ zeroY }}" stroke="#CBD5E1" stroke-width="1"></line>
+              <polyline points="{{ simArea }}" fill="rgba(37,99,235,0.07)" stroke="none"></polyline>
+              <polyline points="{{ simPoints }}" fill="none" stroke="#2563EB" stroke-width="2" stroke-linejoin="round"></polyline>
+              <sc-for list="{{ orderMarks }}" as="o" hint-placeholder-count="8">
+                <circle cx="{{ o.x }}" cy="{{ o.y }}" r="3" fill="#fff" stroke="#2563EB" stroke-width="1.5"></circle>
+              </sc-for>
+              <line x1="48" x2="890" y1="{{ sY }}" y2="{{ sY }}" stroke="#DC2626" stroke-width="1.5" stroke-dasharray="5 4"></line>
+              <line x1="48" x2="890" y1="{{ SY }}" y2="{{ SY }}" stroke="#16A34A" stroke-width="1.5" stroke-dasharray="5 4"></line>
+            </svg>
+            <sc-for list="{{ simXTicks }}" as="t" hint-placeholder-count="6">
+              <div style="{{ t.style }}">{{ t.label }}</div>
+            </sc-for>
+            <sc-for list="{{ simYTicks }}" as="t" hint-placeholder-count="5">
+              <div style="{{ t.style }}">{{ t.label }}</div>
+            </sc-for>
+            <div style="{{ simSTagStyle }}">{{ sTag }}</div>
+            <div style="{{ simSTagStyle2 }}">{{ STag }}</div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-top:14px;">
+              <div style="border:1px solid #E2E8F0; border-radius:10px; padding:12px 14px;">
+                <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:#64748B; font-weight:600;">Replenishments</div>
+                <div style="font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:19px; color:#0F172A; margin-top:5px;">{{ orderCount }}</div>
+              </div>
+              <div style="border:1px solid #E2E8F0; border-radius:10px; padding:12px 14px;">
+                <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:#64748B; font-weight:600;">Stockout days</div>
+                <div style="font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:19px; color:#0F172A; margin-top:5px;">{{ stockoutDays }}</div>
+              </div>
+              <div style="border:1px solid #E2E8F0; border-radius:10px; padding:12px 14px;">
+                <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:#64748B; font-weight:600;">Peak on-hand</div>
+                <div style="font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:19px; color:#0F172A; margin-top:5px;">{{ peak }}</div>
+              </div>
+              <div style="border:1px solid #E2E8F0; border-radius:10px; padding:12px 14px;">
+                <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:#64748B; font-weight:600;">Avg cycle length</div>
+                <div style="font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:19px; color:#0F172A; margin-top:5px;">{{ cycleLen }}</div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+      </section>
+    </main>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;accentColor&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#0F766E&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#2563EB&quot;,&quot;#0F766E&quot;,&quot;#4F46E5&quot;,&quot;#0284C7&quot;],&quot;section&quot;:&quot;Theme&quot;}}">
+class Component extends DCLogic {
+  state = {
+    dist: 'Poisson', K: 64, c: 3, h: 1, p: 12,
+    gamma: 0.97, L: 2, B: 10, Cap: 30,
+    tab: 'exec', running: false, res: null, hover: null, lastRun: '—'
+  };
+
+  componentDidMount() {
+    this.solve();
+  }
+
+  num() {
+    const n = (v, d) => { const x = parseFloat(v); return isFinite(x) ? x : d; };
+    return {
+      K: n(this.state.K, 64), c: n(this.state.c, 3), h: n(this.state.h, 1), p: n(this.state.p, 12),
+      gamma: Math.min(0.999, Math.max(0.5, n(this.state.gamma, 0.97))),
+      L: Math.max(0, Math.round(n(this.state.L, 2))),
+      B: Math.max(1, Math.min(40, Math.round(n(this.state.B, 10)))),
+      C: Math.max(5, Math.min(60, Math.round(n(this.state.Cap, 30))))
+    };
+  }
+
+  pmf() {
+    const mean = 5, Dmax = 22, a = [];
+    if (this.state.dist === 'Poisson') {
+      let f = Math.exp(-mean);
+      for (let d = 0; d <= Dmax; d++) { a.push(f); f = f * mean / (d + 1); }
+    } else {
+      const r = 3, q = r / (r + mean);
+      let f = Math.pow(q, r);
+      for (let d = 0; d <= Dmax; d++) { a.push(f); f = f * (r + d) * (1 - q) / (d + 1); }
+    }
+    const s = a.reduce((x, y) => x + y, 0);
+    return a.map(v => v / s);
+  }
+
+  moments(pm) {
+    let m = 0, m2 = 0;
+    pm.forEach((w, d) => { m += w * d; m2 += w * d * d; });
+    return { mean: m, varr: m2 - m * m };
+  }
+
+  solve() {
+    const t0 = performance.now();
+    const P = this.num(), pm = this.pmf();
+    const { B, C, K, c, h, p, gamma } = P;
+    const N = B + C + 1, idx = x => x + B;
+    const stage = (x, q) => {
+      let e = 0;
+      for (let d = 0; d < pm.length; d++) { const y = x + q - d; e += pm[d] * (y >= 0 ? h * y : -p * y); }
+      return (q > 0 ? K : 0) + c * q + e;
+    };
+    const SC = [], TR = [];
+    for (let xi = 0; xi < N; xi++) {
+      const x = xi - B, qmax = C - x, sc = [], tr = [];
+      for (let q = 0; q <= qmax; q++) {
+        sc.push(stage(x, q));
+        const t = [];
+        for (let d = 0; d < pm.length; d++) { let y = x + q - d; if (y < -B) y = -B; if (y > C) y = C; t.push(idx(y)); }
+        tr.push(t);
+      }
+      SC.push(sc); TR.push(tr);
+    }
+    let V = new Float64Array(N), pol = new Int32Array(N), resid = 0, sweeps = 0;
+    const residHist = [];
+    for (let it = 0; it < 400; it++) {
+      const nV = new Float64Array(N);
+      for (let xi = 0; xi < N; xi++) {
+        let best = Infinity, bq = 0;
+        const sc = SC[xi], tr = TR[xi];
+        for (let q = 0; q < sc.length; q++) {
+          let ev = 0, t = tr[q];
+          for (let d = 0; d < pm.length; d++) ev += pm[d] * V[t[d]];
+          const val = sc[q] + gamma * ev;
+          if (val < best - 1e-9) { best = val; bq = q; }
+        }
+        nV[xi] = best; pol[xi] = bq;
+      }
+      resid = 0;
+      for (let i = 0; i < N; i++) resid = Math.max(resid, Math.abs(nV[i] - V[i]));
+      V = nV; sweeps = it + 1; residHist.push(resid);
+      if (resid < 1e-6) break;
+    }
+    let sVal = -B, SVal = C;
+    for (let xi = N - 1; xi >= 0; xi--) { if (pol[xi] > 0) { sVal = xi - B; SVal = xi - B + pol[xi]; break; } }
+
+    const days = 90;
+    const rngF = (seed => { let z = seed >>> 0; return () => (z = (z * 1664525 + 1013904223) >>> 0) / 4294967296; })(20260920);
+    const cdf = []; let acc = 0; pm.forEach(w => { acc += w; cdf.push(acc); });
+    const demand = [];
+    for (let t = 0; t < days; t++) { const u = rngF(); let d = 0; while (d < cdf.length - 1 && u > cdf[d]) d++; demand.push(d); }
+
+    const sim = (order) => {
+      let x = Math.round(SVal * 0.6), cost = 0, orders = 0, unmet = 0, tot = 0, onhand = 0, okDays = 0, soDays = 0, peak = x;
+      const path = [x], marks = [];
+      for (let t = 0; t < days; t++) {
+        const q = Math.max(0, Math.min(C - x, order(x)));
+        if (q > 0) { orders++; cost += K; marks.push(t); }
+        cost += c * q;
+        let y = x + q;
+        peak = Math.max(peak, y);
+        const d = demand[t]; tot += d;
+        const served = Math.min(Math.max(y, 0), d);
+        if (served >= d) okDays++; else { soDays++; unmet += d - served; }
+        let nx = y - d;
+        if (nx < -B) nx = -B; if (nx > C) nx = C;
+        cost += nx >= 0 ? h * nx : -p * nx;
+        onhand += Math.max(nx, 0);
+        x = nx; path.push(x);
+      }
+      return {
+        cost, avg: cost / days, csl: okDays / days, fill: 1 - unmet / tot,
+        orders, path, marks, avgOnHand: onhand / days, backorders: Math.round(unmet),
+        soDays, peak, cycle: orders ? days / orders : days
+      };
+    };
+
+    const mdp = sim(x => pol[idx(Math.max(-B, Math.min(C, x)))]);
+    const bs = sim(x => (x < SVal ? SVal - x : 0));
+    const mean = this.moments(pm).mean;
+    const eoqQ = Math.max(1, Math.round(Math.sqrt(2 * K * mean / Math.max(h, 0.01))));
+    const rop = Math.round(mean * P.L);
+    const eoq = sim(x => (x <= rop ? eoqQ : 0));
+
+    // normalized log10 residual per sweep (1 = first sweep, 0 = converged)
+    const logs = residHist.map(v => Math.log10(Math.max(v, 1e-8)));
+    const lmax = Math.max.apply(null, logs), lmin = Math.min.apply(null, logs);
+    const spark = logs.map(v => (v - lmin) / Math.max(lmax - lmin, 1e-9));
+    const bound = residHist.map((_, i) => Math.pow(gamma, i));
+
+    this.setState({
+      running: false,
+      lastRun: new Date().toLocaleTimeString('en-GB'),
+      res: {
+        V: Array.from(V), pol: Array.from(pol), s: sVal, S: SVal, B, C, mdp, bs, eoq,
+        eoqQ, rop, resid, sweeps, ms: Math.round(performance.now() - t0), days,
+        moments: this.moments(pm), spark, bound
+      }
+    });
+  }
+
+  run = () => { this.setState({ running: true }); setTimeout(() => this.solve(), 30); };
+  set = (k) => (e) => this.setState({ [k]: e.target.value });
+
+  fmt(n, d) { return n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }); }
+  pct(n, d) { return (n * 100).toFixed(d === undefined ? 1 : d) + '%'; }
+
+  csv() {
+    const r = this.state.res; if (!r) return;
+    const rows = [['policy', 'avg_cost_per_period', 'total_cost', 'csl', 'fill_rate', 'orders']];
+    [['MDP (s,S)', r.mdp], ['Base-Stock', r.bs], ['Static EOQ', r.eoq]].forEach(([n, m]) =>
+      rows.push([n, m.avg.toFixed(3), m.cost.toFixed(2), (m.csl * 100).toFixed(2), (m.fill * 100).toFixed(2), m.orders]));
+    const blob = new Blob([rows.map(x => x.join(',')).join('\n')], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'stochopt-benchmark.csv'; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+
+  renderVals() {
+    const st = this.state, r = st.res, P = this.num();
+    const accent = this.props.accentColor || '#2563EB';
+    const tabBtn = (on) => 'appearance:none;cursor:pointer;padding:9px 16px;font-size:13.5px;font-weight:600;white-space:nowrap;border-radius:8px;transition:background .15s,color .15s;' +
+      (on
+        ? 'color:#fff;background:' + accent + ';border:1px solid ' + accent + ';box-shadow:0 1px 2px rgba(15,23,42,0.12);'
+        : 'color:#475569;background:#fff;border:1px solid #E2E8F0;');
+    const distBtn = (on) => 'appearance:none;cursor:pointer;padding:10px 0;font-size:12.5px;font-weight:600;border-radius:7px;border:1px solid ' +
+      (on ? accent : '#E2E8F0') + ';background:' + (on ? '#EFF6FF' : '#fff') + ';color:' + (on ? '#1D4ED8' : '#475569') + ';';
+
+    const base = {
+      accent,
+      K: st.K, c: st.c, h: st.h, p: st.p, gamma: st.gamma, L: st.L, B: st.B, Cap: st.Cap,
+      onK: this.set('K'), onC: this.set('c'), onH: this.set('h'), onP: this.set('p'),
+      onGamma: this.set('gamma'), onL: this.set('L'), onB: this.set('B'), onCap: this.set('Cap'),
+      setPoisson: () => this.setState({ dist: 'Poisson' }, () => this.solve()),
+      setNegBin: () => this.setState({ dist: 'NegBin' }, () => this.solve()),
+      poissonBtn: distBtn(st.dist === 'Poisson'), negbinBtn: distBtn(st.dist === 'NegBin'),
+      run: this.run,
+      runLabel: st.running ? 'Solving…' : 'Run Optimization & Simulation',
+      runBtn: 'appearance:none;border:none;cursor:pointer;width:100%;padding:14px 12px;border-radius:8px;font-size:13px;font-weight:600;color:#fff;background:' +
+        (st.running ? '#93C5FD' : accent) + ';box-shadow:0 1px 2px rgba(37,99,235,0.35);',
+      tabExec: () => this.setState({ tab: 'exec' }),
+      tabPolicy: () => this.setState({ tab: 'policy' }),
+      tabSim: () => this.setState({ tab: 'sim' }),
+      tabExecStyle: tabBtn(st.tab === 'exec'), tabPolicyStyle: tabBtn(st.tab === 'policy'), tabSimStyle: tabBtn(st.tab === 'sim'),
+      isExec: st.tab === 'exec', isPolicy: st.tab === 'policy', isSim: st.tab === 'sim',
+      lastRun: st.lastRun, simDaysLabel: 90, stateCount: P.B + P.C + 1,
+      exportCsv: () => this.csv(), exportPdf: () => window.print()
+    };
+    if (!r) return base;
+
+    const red = (r.eoq.cost - r.mdp.cost) / r.eoq.cost;
+    const mk = (name, tag, spec, m, color, bg, bd) => {
+      const d = (r.eoq.cost - m.cost) / r.eoq.cost;
+      const pos = d > 0.0005;
+      return {
+        name, tag, spec, avg: this.fmt(m.avg, 2), total: this.fmt(m.cost, 0),
+        csl: this.pct(m.csl), fill: this.pct(m.fill), orders: m.orders,
+        delta: (d >= 0 ? '−' : '+') + Math.abs(d * 100).toFixed(1) + '%',
+        badge: 'font-family:IBM Plex Mono,monospace;font-size:10.5px;font-weight:600;padding:2px 6px;border-radius:5px;color:' + color + ';background:' + bg + ';border:1px solid ' + bd + ';',
+        deltaBadge: 'font-family:IBM Plex Mono,monospace;font-size:11.5px;font-weight:600;padding:3px 8px;border-radius:999px;' +
+          (pos ? 'color:#15803D;background:#F0FDF4;border:1px solid #BBF7D0;' : 'color:#64748B;background:#F1F5F9;border:1px solid #E2E8F0;')
+      };
+    };
+
+    // Policy explorer geometry
+    const N = r.V.length, x0 = -r.B, x1 = r.C;
+    const px = (x) => 48 + (x - x0) / (x1 - x0) * 842;
+    const vmin = Math.min.apply(null, r.V), vmax = Math.max.apply(null, r.V);
+    const py = (v) => 240 - (v - vmin) / Math.max(vmax - vmin, 1e-6) * 226;
+    const vPoints = r.V.map((v, i) => px(i + x0).toFixed(1) + ',' + py(v).toFixed(1)).join(' ');
+    const qmaxAll = Math.max(1, Math.max.apply(null, r.pol));
+    const bw = Math.max(3, 842 / N - 2);
+    const qBars = r.pol.map((q, i) => {
+      const hgt = q / qmaxAll * 120;
+      return { x: (px(i + x0) - bw / 2).toFixed(1), y: (252 - hgt).toFixed(1), w: bw.toFixed(1), h: hgt.toFixed(1) };
+    });
+    const gridY = [0, 1, 2, 3].map(i => ({ y: 14 + i * 60 }));
+    const yTicks = [0, 1, 2, 3].map(i => {
+      const y = 14 + i * 75.3;
+      return { y: y + 4, label: Math.round(vmin + (240 - y) / 226 * (vmax - vmin)).toString() };
+    });
+    const xTicks = [];
+    for (let x = x0; x <= x1; x += Math.max(1, Math.round((x1 - x0) / 8))) xTicks.push({ x: px(x).toFixed(1), label: String(x) });
+
+    // Trajectory geometry
+    const path = r.mdp.path, days = path.length;
+    const lo = Math.min(-r.B, Math.min.apply(null, path)), hi = Math.max(r.S + 2, Math.max.apply(null, path));
+    const tx = (i) => 48 + i / (days - 1) * 842;
+    const ty = (v) => 258 - (v - lo) / Math.max(hi - lo, 1) * 244;
+    const simPoints = path.map((v, i) => tx(i).toFixed(1) + ',' + ty(v).toFixed(1)).join(' ');
+    const simArea = tx(0).toFixed(1) + ',' + ty(0).toFixed(1) + ' ' + simPoints + ' ' + tx(days - 1).toFixed(1) + ',' + ty(0).toFixed(1);
+    const simXTicks = [];
+    for (let i = 0; i < days; i += 15) simXTicks.push({ x: tx(i).toFixed(1), label: 'd' + i });
+    const simYTicks = [0, 1, 2, 3, 4].map(i => {
+      const val = lo + (hi - lo) * i / 4;
+      return { y: (ty(val) + 4).toFixed(1), label: Math.round(val).toString() };
+    });
+    const simGridY = [0, 1, 2, 3, 4].map(i => ({ y: (14 + i * 61).toFixed(1) }));
+
+    const hoverIdx = st.hover;
+    const hoverText = hoverIdx == null
+      ? 'x = —   V*(x) = —   μ*(x) = —'
+      : 'x = ' + (hoverIdx + x0) + '   V*(x) = ' + this.fmt(r.V[hoverIdx], 1) + '   μ*(x) = ' + r.pol[hoverIdx];
+
+    const nS = Math.max(r.spark.length - 1, 1);
+    const sparkMdp = r.spark.map((v, i) => (i / nS * 240).toFixed(1) + ',' + (38 - v * 34).toFixed(1)).join(' ');
+    const sparkBase = r.bound.map((v, i) => (i / nS * 240).toFixed(1) + ',' + (38 - v * 34).toFixed(1)).join(' ');
+    const tickBase = 'position:absolute;font-family:IBM Plex Mono,monospace;font-size:11px;color:#94A3B8;pointer-events:none;';
+    const xLab = (xv, top) => tickBase + 'left:' + (xv / 900 * 100).toFixed(2) + '%;top:' + top + 'px;transform:translateX(-50%);';
+    const yLab = (yv) => tickBase + 'left:0;width:' + (42 / 900 * 100).toFixed(2) + '%;text-align:right;top:' + (yv - 11).toFixed(1) + 'px;';
+
+    return Object.assign(base, {
+      costRed: this.pct(red),
+      sparkBase, sparkMdp,
+      sVal: r.s, SVal: r.S, bandSize: r.S - r.s,
+      bandBarStyle: 'position:absolute;top:0;bottom:0;border-radius:999px;background:' + accent + ';left:' +
+        ((r.s + r.B) / (r.B + r.C) * 100).toFixed(1) + '%;width:' + ((r.S - r.s) / (r.B + r.C) * 100).toFixed(1) + '%;',
+      cslPct: this.pct(r.mdp.csl),
+      cslBarStyle: 'height:100%;border-radius:999px;background:' + accent + ';width:' + (r.mdp.csl * 100).toFixed(1) + '%;',
+      fillPct: this.pct(r.mdp.fill, 1),
+      avgOnHand: this.fmt(r.mdp.avgOnHand, 1), backorders: r.mdp.backorders,
+      rows: [
+        mk('MDP (s, S)', 'OPT', 'value iteration · γ=' + P.gamma + ' · s=' + r.s + ', S=' + r.S, r.mdp, '#1D4ED8', '#EFF6FF', '#BFDBFE'),
+        mk('Base-Stock', 'HEUR', 'order-up-to S=' + r.S + ' every period', r.bs, '#B45309', '#FFFBEB', '#FDE68A'),
+        mk('Static EOQ', 'BASE', 'Q=' + r.eoqQ + ' · reorder point R=' + r.rop, r.eoq, '#475569', '#F1F5F9', '#E2E8F0')
+      ],
+      gap: r.resid < 1e-5 ? '< 1e-5' : r.resid.toExponential(1),
+      solveMs: r.ms + ' ms', sweeps: r.sweeps, v0: this.fmt(r.V[r.B], 1),
+      demandMean: this.fmt(r.moments.mean, 2), demandVar: this.fmt(r.moments.varr, 2),
+      vPoints, qBars, gridY,
+      xTicks: xTicks.map(t => ({ label: t.label, style: xLab(parseFloat(t.x), 258) })),
+      yTicks: yTicks.map(t => ({ label: t.label, style: yLab(t.y) })),
+      sX: px(r.s).toFixed(1), SX: px(r.S).toFixed(1),
+      sTag: 's = ' + r.s, STag: 'S = ' + r.S,
+      sTagStyle: xLab(px(r.s), 276) + 'color:#DC2626;font-weight:600;',
+      STagStyle: xLab(px(r.S), 276) + 'color:#16A34A;font-weight:600;',
+      simSTagStyle: tickBase + 'left:7%;color:#DC2626;font-weight:600;background:rgba(255,255,255,0.92);border:1px solid #FEE2E2;border-radius:5px;padding:1px 6px;top:' + (ty(r.s) - 19).toFixed(1) + 'px;',
+      simSTagStyle2: tickBase + 'left:7%;color:#16A34A;font-weight:600;background:rgba(255,255,255,0.92);border:1px solid #DCFCE7;border-radius:5px;padding:1px 6px;top:' + (ty(r.S) - 19).toFixed(1) + 'px;',
+      hoverText,
+      onHover: (e) => {
+        const b = e.currentTarget.getBoundingClientRect();
+        const rel = (e.clientX - b.left) / b.width * 900;
+        const i = Math.round((rel - 48) / 842 * (N - 1));
+        if (i >= 0 && i < N) this.setState({ hover: i });
+      },
+      offHover: () => this.setState({ hover: null }),
+      simPoints, simArea, simGridY,
+      simXTicks: simXTicks.map(t => ({ label: t.label, style: xLab(parseFloat(t.x), 292) })),
+      simYTicks: simYTicks.map(t => ({ label: t.label, style: yLab(parseFloat(t.y)) })),
+      zeroY: ty(0).toFixed(1), negY: ty(0).toFixed(1), negH: Math.max(0, 258 - ty(0)).toFixed(1),
+      sY: ty(r.s).toFixed(1), SY: ty(r.S).toFixed(1),
+      sLabelY: (ty(r.s) - 5).toFixed(1), SLabelY: (ty(r.S) - 5).toFixed(1),
+      orderMarks: r.mdp.marks.map(i => ({ x: tx(i).toFixed(1), y: ty(path[i]).toFixed(1) })),
+      orderCount: r.mdp.orders, stockoutDays: r.mdp.soDays, peak: r.mdp.peak,
+      cycleLen: this.fmt(r.mdp.cycle, 1) + ' d'
+    });
+  }
+}
+</script>
+</body>
+</html>

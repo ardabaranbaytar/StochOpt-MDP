@@ -1,8 +1,7 @@
-import { BookOpen, LineChart, Menu } from "lucide-react";
+import { BookOpen, Menu, Package } from "lucide-react";
 import { useEffect, useState } from "react";
 import { checkHealth } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import { Badge } from "./ui/primitives";
 
 const GITHUB_URL = "https://github.com/ardabaranbaytar/StochOpt-MDP";
 const POLL_MS = 15_000;
@@ -39,20 +38,19 @@ export function useApiStatus(pollMs = POLL_MS): ApiStatus {
 
 export function StatusIndicator({ status }: { status: ApiStatus }) {
   const map = {
-    checking: { dot: "bg-zinc-500", text: "Checking…", tone: "zinc" as const },
-    online: { dot: "bg-emerald-400", text: "API online", tone: "emerald" as const },
-    offline: { dot: "bg-rose-500", text: "API offline", tone: "rose" as const },
+    checking: { dot: "bg-slate-400", text: "Checking…", pill: "border-slate-200 bg-slate-50 text-slate-600" },
+    online: { dot: "bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.18)]", text: "API online", pill: "border-emerald-200 bg-emerald-50 text-emerald-700" },
+    offline: { dot: "bg-rose-500 shadow-[0_0_0_3px_rgba(244,63,94,0.18)]", text: "API offline", pill: "border-rose-200 bg-rose-50 text-rose-700" },
   }[status];
   return (
-    <Badge tone={map.tone} role="status" aria-label={`FastAPI status: ${map.text}`}>
-      <span className="relative flex h-2 w-2">
-        {status === "online" && (
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-        )}
-        <span className={cn("relative inline-flex h-2 w-2 rounded-full", map.dot)} />
-      </span>
+    <span
+      role="status"
+      aria-label={`FastAPI status: ${map.text}`}
+      className={cn("inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold", map.pill)}
+    >
+      <span className={cn("h-[7px] w-[7px] rounded-full", map.dot)} />
       {map.text}
-    </Badge>
+    </span>
   );
 }
 
@@ -63,48 +61,36 @@ export function Header({
   status: ApiStatus;
   onToggleSidebar: () => void;
 }) {
+  const link = "inline-flex items-center gap-1.5 text-[13px] font-medium text-slate-600 transition-colors hover:text-blue-600";
   return (
-    <header className="sticky top-0 z-30 border-b border-zinc-800 bg-[#090A0F]/80 backdrop-blur-xl">
-      <div className="flex h-14 items-center justify-between gap-4 px-4 lg:px-6">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onToggleSidebar}
-            aria-label="Toggle control panel"
-            className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800 lg:hidden"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 text-zinc-950">
-            <LineChart className="h-4.5 w-4.5" aria-hidden />
+    <header className="sticky top-0 z-30 border-b border-slate-200 bg-white">
+      <div className="mx-auto flex h-[68px] max-w-[1560px] items-center gap-4 px-4 lg:px-6">
+        <button
+          type="button"
+          onClick={onToggleSidebar}
+          aria-label="Toggle control panel"
+          className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 lg:hidden"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white shadow-[0_2px_10px_rgba(37,99,235,0.35)]">
+            <Package className="h-4 w-4" aria-hidden />
           </div>
-          <div className="leading-tight">
-            <div className="flex items-center gap-2">
-              <h1 className="text-sm font-semibold text-zinc-100">StochOpt Enterprise</h1>
-              <Badge tone="emerald" className="tabular">
-                v1.1.0
-              </Badge>
-            </div>
-            <p className="hidden text-[11px] text-zinc-500 sm:block">Operations Research Suite</p>
-          </div>
+          <h1 className="text-base font-bold tracking-tight text-slate-900">StochOpt Enterprise</h1>
+          <span className="rounded-[5px] border border-slate-200 bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] text-slate-600">
+            v1.1.0
+          </span>
         </div>
-        <nav className="flex items-center gap-2 sm:gap-3" aria-label="Resources">
-          <StatusIndicator status={status} />
-          <a
-            href="/docs"
-            target="_blank"
-            rel="noreferrer"
-            className="hidden items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800 sm:inline-flex"
-          >
-            <BookOpen className="h-3.5 w-3.5" aria-hidden /> API Docs
+        <StatusIndicator status={status} />
+        <p className="hidden text-[11px] text-slate-500 md:block">Operations Research Suite</p>
+        <div className="flex-1" />
+        <nav className="flex items-center gap-5" aria-label="Resources">
+          <a href="/docs" target="_blank" rel="noreferrer" className={cn(link, "hidden sm:inline-flex")}>
+            <BookOpen className="h-[15px] w-[15px]" aria-hidden /> Docs
           </a>
-          <a
-            href={GITHUB_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800"
-          >
-            <GithubMark className="h-3.5 w-3.5" /> <span className="hidden sm:inline">GitHub</span>
+          <a href={GITHUB_URL} target="_blank" rel="noreferrer" className={link}>
+            <GithubMark className="h-[15px] w-[15px]" /> GitHub
           </a>
         </nav>
       </div>

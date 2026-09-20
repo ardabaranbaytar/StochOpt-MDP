@@ -14,7 +14,7 @@ export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
-        "rounded-xl border border-zinc-800 bg-zinc-900/60 shadow-lg shadow-black/20 backdrop-blur-md",
+        "rounded-xl border border-slate-200/80 bg-white shadow-sm transition-[box-shadow,border-color] duration-150 hover:border-slate-300 hover:shadow-md",
         className,
       )}
       {...props}
@@ -27,11 +27,11 @@ export function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElemen
 }
 
 export function CardTitle({ className, ...props }: HTMLAttributes<HTMLHeadingElement>) {
-  return <h3 className={cn("text-sm font-semibold text-zinc-100", className)} {...props} />;
+  return <h3 className={cn("text-sm font-semibold text-slate-900", className)} {...props} />;
 }
 
 export function CardDescription({ className, ...props }: HTMLAttributes<HTMLParagraphElement>) {
-  return <p className={cn("text-xs text-zinc-400", className)} {...props} />;
+  return <p className={cn("text-[12.5px] text-slate-500", className)} {...props} />;
 }
 
 export function CardContent({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
@@ -43,12 +43,12 @@ export function CardContent({ className, ...props }: HTMLAttributes<HTMLDivEleme
 export type Tone = "emerald" | "amber" | "sky" | "indigo" | "rose" | "zinc";
 
 const TONES: Record<Tone, string> = {
-  emerald: "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
-  amber: "border-amber-500/30 bg-amber-500/10 text-amber-300",
-  sky: "border-sky-400/30 bg-sky-400/10 text-sky-300",
-  indigo: "border-indigo-500/30 bg-indigo-500/10 text-indigo-300",
-  rose: "border-rose-500/30 bg-rose-500/10 text-rose-300",
-  zinc: "border-zinc-700 bg-zinc-800/60 text-zinc-300",
+  emerald: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  amber: "border-amber-200 bg-amber-50 text-amber-700",
+  sky: "border-sky-200 bg-sky-50 text-sky-700",
+  indigo: "border-blue-200 bg-blue-50 text-blue-700",
+  rose: "border-rose-200 bg-rose-50 text-rose-700",
+  zinc: "border-slate-300 bg-slate-100 text-slate-600",
 };
 
 export function Badge({
@@ -73,10 +73,9 @@ export function Badge({
 type ButtonVariant = "primary" | "outline" | "ghost";
 
 const VARIANTS: Record<ButtonVariant, string> = {
-  primary:
-    "bg-emerald-500 text-zinc-950 hover:bg-emerald-400 shadow-lg shadow-emerald-500/20 font-semibold",
-  outline: "border border-zinc-700 bg-zinc-900/60 text-zinc-200 hover:bg-zinc-800",
-  ghost: "text-zinc-300 hover:bg-zinc-800/70",
+  primary: "bg-blue-600 text-white shadow-sm hover:bg-blue-700 font-semibold",
+  outline: "border border-slate-300 bg-white text-slate-700 shadow-sm hover:bg-slate-50 hover:text-slate-900",
+  ghost: "text-slate-600 hover:bg-slate-100",
 };
 
 export function Button({
@@ -90,8 +89,8 @@ export function Button({
   return (
     <button
       className={cn(
-        "inline-flex h-9 items-center justify-center gap-2 rounded-lg px-4 text-sm transition-colors",
-        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400",
+        "relative inline-flex h-9 items-center justify-center gap-2 overflow-hidden rounded-lg px-4 text-sm transition-colors",
+        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500",
         "disabled:cursor-not-allowed disabled:opacity-50",
         VARIANTS[variant],
         className,
@@ -102,6 +101,9 @@ export function Button({
     >
       {loading && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
       {children}
+      {loading && variant === "primary" && (
+        <span aria-hidden className="loading-bar pointer-events-none absolute inset-x-0 bottom-0 h-0.5 overflow-hidden bg-white/30" />
+      )}
     </button>
   );
 }
@@ -135,11 +137,7 @@ export function Tabs({
   };
 
   return (
-    <div
-      role="tablist"
-      onKeyDown={onKeyDown}
-      className="inline-flex flex-wrap gap-1 rounded-xl border border-zinc-800 bg-zinc-900/60 p-1"
-    >
+    <div role="tablist" onKeyDown={onKeyDown} className="flex flex-wrap items-center gap-2">
       {items.map((t) => {
         const active = t.id === value;
         return (
@@ -155,10 +153,10 @@ export function Tabs({
             tabIndex={active ? 0 : -1}
             onClick={() => onChange(t.id)}
             className={cn(
-              "inline-flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors",
+              "inline-flex items-center gap-2 whitespace-nowrap rounded-lg border px-4 py-2 text-[13.5px] font-semibold transition-colors",
               active
-                ? "bg-zinc-800 text-emerald-300 shadow-inner"
-                : "text-zinc-400 hover:text-zinc-200",
+                ? "border-blue-600 bg-blue-600 text-white shadow-sm"
+                : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50",
             )}
           >
             {t.icon}

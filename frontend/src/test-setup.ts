@@ -7,3 +7,6 @@ class ResizeObserverStub {
   disconnect() {}
 }
 globalThis.ResizeObserver = globalThis.ResizeObserver ?? ResizeObserverStub;
+
+// jsdom does not implement scrolling.
+window.scrollTo = (() => {}) as typeof window.scrollTo;

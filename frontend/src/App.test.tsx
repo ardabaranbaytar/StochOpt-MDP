@@ -55,13 +55,19 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("App", () => {
-  it("shows header, API status and the empty state", async () => {
+  it("shows header, API status and a pre-populated sample analysis", async () => {
     render(<App />);
     expect(screen.getByText("StochOpt Enterprise")).toBeInTheDocument();
     expect(screen.getByText("v1.1.0")).toBeInTheDocument();
     expect(screen.getByText("Operations Research Suite")).toBeInTheDocument();
     expect(await screen.findByText("API online")).toBeInTheDocument();
-    expect(screen.getByText("No analysis yet")).toBeInTheDocument();
+    expect(screen.queryByText("No analysis yet")).not.toBeInTheDocument();
+    const values = screen.getAllByTestId("kpi-value").map((v) => v.textContent ?? "");
+    expect(values[0]).toMatch(/^−?\d+\.\d%$/);
+    expect(values[1]).toMatch(/^s=-?\d+ S=\d+$/);
+    expect(values[2]).toMatch(/^\d+\.\d%$/);
+    expect(values[3]).toMatch(/^\d+\.\d%$/);
+    expect(screen.getByText(/Sample analysis/)).toBeInTheDocument();
   });
 
   it("reports API offline when /health fails", async () => {
@@ -73,17 +79,19 @@ describe("App", () => {
   it("runs the analysis, sends lead_time and renders KPIs + benchmark", async () => {
     const user = userEvent.setup();
     render(<App />);
-    await user.clear(screen.getByLabelText(/L — lead time/));
-    await user.type(screen.getByLabelText(/L — lead time/), "2");
+    await user.clear(screen.getByLabelText(/L · lead time/));
+    await user.type(screen.getByLabelText(/L · lead time/), "2");
     await user.click(screen.getByRole("button", { name: /Run Optimization & Simulation/ }));
 
-    const values = await screen.findAllByTestId("kpi-value");
-    expect(values.map((v) => v.textContent)).toEqual(["32.0%", "(3, 9)", "90.0%", "99.0%"]);
+    await waitFor(() =>
+      expect(screen.getAllByTestId("kpi-value").map((v) => v.textContent)).toEqual(["32.0%", "s=3 S=9", "90.0%", "99.0%"]),
+    );
+    expect(screen.queryByText(/Sample analysis/)).not.toBeInTheDocument();
     expect(screen.getByText("MDP (s, S)")).toBeInTheDocument();
     expect(screen.getByText("Base-Stock")).toBeInTheDocument();
     expect(screen.getByText("Static EOQ")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Export Benchmark CSV/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Executive Report \(PDF\)/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Export CSV/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Export PDF/ })).toBeInTheDocument();
 
     const sent = fetchMock.mock.calls.filter(([u]) => String(u).startsWith("/api/v1/"));
     expect(sent).toHaveLength(2);
@@ -96,16 +104,15 @@ describe("App", () => {
     const user = userEvent.setup();
     render(<App />);
     await user.click(screen.getByRole("button", { name: /Run Optimization & Simulation/ }));
-    await screen.findAllByTestId("kpi-value");
+    await waitFor(() => expect(screen.queryByText(/Sample analysis/)).not.toBeInTheDocument());
 
-    await user.click(screen.getByRole("tab", { name: /Policy & Value Function/ }));
-    expect(screen.getByText("Value function V*(x)")).toBeInTheDocument();
-    expect(screen.getByText("Decision rule π*(x)")).toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: /Policy Explorer/ }));
+    expect(screen.getByText("V*(x) and the optimal decision rule")).toBeInTheDocument();
     expect(screen.getByText(/42 iterations/)).toBeInTheDocument();
 
     await user.click(screen.getByRole("tab", { name: /Monte Carlo Trajectory/ }));
-    expect(screen.getByText(/Monte Carlo trajectory · first 4 days/)).toBeInTheDocument();
-    expect(screen.getByText("2 orders")).toBeInTheDocument();
+    expect(screen.getByText(/Inventory trajectory · 4 days/)).toBeInTheDocument();
+    expect(screen.getByText("Replenishments").nextElementSibling).toHaveTextContent("2");
   });
 
   it("surfaces API errors", async () => {
@@ -121,7 +128,7 @@ describe("App", () => {
   it("blocks the run button on invalid input", async () => {
     const user = userEvent.setup();
     render(<App />);
-    await user.selectOptions(screen.getByLabelText("Distribution"), "negative_binomial");
+    await user.click(screen.getByRole("radio", { name: "NegBin" }));
     const variance = screen.getByLabelText(/Variance/);
     await user.clear(variance);
     await user.type(variance, "3");
@@ -150,7 +157,7 @@ describe("App", () => {
     await user.upload(screen.getByLabelText("Upload demand CSV"), file);
     await user.click(await screen.findByRole("button", { name: /Apply to model/ }));
 
-    await waitFor(() => expect(screen.getByLabelText("Distribution")).toHaveValue("negative_binomial"));
+    await waitFor(() => expect(screen.getByRole("radio", { name: "NegBin" })).toBeChecked());
     expect(screen.getByLabelText(/Mean μ/)).toHaveValue(12.35);
     expect(screen.getByLabelText(/Variance/)).toHaveValue(40.5);
   });

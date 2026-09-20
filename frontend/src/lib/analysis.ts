@@ -37,3 +37,24 @@ export function parseSalesCsv(text: string): number[] {
   }
   throw new Error("No numeric sales column with at least 2 rows was found.");
 }
+
+export interface SparkPoint {
+  value: number;
+  bench: number;
+}
+
+/**
+ * Convergence curve for the KPI sparkline: the normalised log-residual per sweep against the
+ * theoretical γᵏ contraction bound. The API reports only the iteration count, so without a real
+ * history the residual line is modelled as a geometric decay.
+ */
+export function convergenceSpark(iterations: number, gamma: number, history?: number[]): SparkPoint[] {
+  if (history && history.length > 1) {
+    const logs = history.map((v) => Math.log10(Math.max(v, 1e-8)));
+    const lo = Math.min(...logs);
+    const hi = Math.max(...logs);
+    return logs.map((v, k) => ({ value: (v - lo) / Math.max(hi - lo, 1e-9), bench: Math.pow(gamma, k) }));
+  }
+  const n = Math.max(2, Math.min(iterations, 200));
+  return Array.from({ length: n }, (_, k) => ({ value: 1 - k / (n - 1), bench: Math.pow(gamma, k) }));
+}

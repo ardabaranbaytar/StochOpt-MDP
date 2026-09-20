@@ -70,4 +70,8 @@ export interface AnalysisResult {
   request: SimulateRequest;
   optimize: OptimizeResponse;
   simulate: SimulateResponse;
+  /** Per-sweep Bellman residuals; only known for the client-side sample, not returned by the API. */
+  residualHistory?: number[];
+  /** Wall-clock time of the solve in milliseconds (measured client-side). */
+  solveMs?: number;
 }

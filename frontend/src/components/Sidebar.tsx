@@ -1,4 +1,4 @@
-import { ChevronDown, FileUp, Play, Wand2 } from "lucide-react";
+import { ChevronDown, FileUp, Play, SlidersHorizontal, Wand2 } from "lucide-react";
 import { type DragEvent, type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { fitDemand } from "@/lib/api";
 import { num, parseSalesCsv } from "@/lib/analysis";
@@ -11,7 +11,6 @@ import { Badge, Button } from "./ui/primitives";
 
 export function NumberField({
   label,
-  hint,
   value,
   onChange,
   step = 1,
@@ -19,7 +18,6 @@ export function NumberField({
   max,
 }: {
   label: string;
-  hint?: string;
   value: number;
   onChange: (v: number) => void;
   step?: number;
@@ -35,10 +33,9 @@ export function NumberField({
   }, [value]);
 
   return (
-    <div className="space-y-1">
-      <label htmlFor={id} className="flex items-baseline justify-between text-xs text-zinc-400">
-        <span>{label}</span>
-        {hint && <span className="text-[10px] text-zinc-600">{hint}</span>}
+    <div className="flex flex-col gap-1">
+      <label htmlFor={id} className="text-[11px] text-slate-600">
+        {label}
       </label>
       <input
         id={id}
@@ -54,35 +51,38 @@ export function NumberField({
           if (Number.isFinite(n)) onChange(n);
         }}
         onBlur={() => setText(String(value))}
-        className="tabular h-9 w-full rounded-lg border border-zinc-800 bg-zinc-950/60 px-3 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/20"
+        className="box-border w-full rounded-[7px] border border-slate-200 bg-slate-50 px-2.5 py-2 font-mono text-[13px] font-semibold text-slate-900 outline-none transition-colors focus:border-blue-600 focus:bg-white"
       />
     </div>
   );
 }
 
-function Section({
-  title,
-  defaultOpen = true,
-  children,
-}: {
-  title: string;
-  defaultOpen?: boolean;
-  children: ReactNode;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
+const GROUP_TITLE = "mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500";
+
+function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="border-b border-zinc-800/80 py-3">
+    <div>
+      <div className={GROUP_TITLE}>{title}</div>
+      <div className="grid grid-cols-2 gap-2">{children}</div>
+    </div>
+  );
+}
+
+function CollapsibleGroup({ title, children }: { title: string; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="flex w-full items-center justify-between py-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-500 hover:text-zinc-300"
+        className={cn(GROUP_TITLE, "mb-0 flex w-full items-center justify-between hover:text-slate-700")}
       >
         {title}
         <ChevronDown className={cn("h-4 w-4 transition-transform", open && "rotate-180")} />
       </button>
-      {open && <div className="mt-2 grid grid-cols-2 gap-3">{children}</div>}
-    </section>
+      {open && <div className="mt-2 grid grid-cols-2 gap-2">{children}</div>}
+    </div>
   );
 }
 
@@ -117,7 +117,7 @@ export function CsvDropzone({ onApply }: { onApply: (fit: DemandFitResult) => vo
 
   return (
     <div className="space-y-2 py-3">
-      <h2 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+      <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
         Historical demand
       </h2>
       <div
@@ -129,15 +129,15 @@ export function CsvDropzone({ onApply }: { onApply: (fit: DemandFitResult) => vo
         onDrop={onDrop}
         className={cn(
           "flex flex-col items-center gap-1 rounded-lg border border-dashed px-3 py-4 text-center text-xs transition-colors",
-          dragging ? "border-emerald-400 bg-emerald-500/5" : "border-zinc-700 bg-zinc-950/40",
+          dragging ? "border-blue-400 bg-blue-50" : "border-slate-300 bg-slate-50",
         )}
       >
-        <FileUp className="h-5 w-5 text-zinc-500" aria-hidden />
-        <span className="text-zinc-300">Drop a CSV of daily sales</span>
+        <FileUp className="h-5 w-5 text-slate-500" aria-hidden />
+        <span className="text-slate-600">Drop a CSV of daily sales</span>
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="text-emerald-400 underline-offset-2 hover:underline"
+          className="text-blue-600 underline-offset-2 hover:underline"
         >
           CSV Talep Yükle
         </button>
@@ -153,21 +153,21 @@ export function CsvDropzone({ onApply }: { onApply: (fit: DemandFitResult) => vo
           }}
         />
       </div>
-      {busy && <p className="text-xs text-zinc-400">Fitting distribution…</p>}
+      {busy && <p className="text-xs text-slate-500">Fitting distribution…</p>}
       {error && (
-        <p role="alert" className="text-xs text-rose-400">
+        <p role="alert" className="text-xs text-rose-600">
           {error}
         </p>
       )}
       {fit && (
-        <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-950/40 p-3 text-xs">
+        <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs">
           <div className="flex items-center justify-between">
             <Badge tone={fit.distribution_type === "poisson" ? "sky" : "amber"}>
               {fit.distribution_type === "poisson" ? "Poisson" : "Negative Binomial"}
             </Badge>
-            <span className="text-zinc-500">n = {fit.n}</span>
+            <span className="text-slate-500">n = {fit.n}</span>
           </div>
-          <p className="tabular text-zinc-300">
+          <p className="tabular text-slate-600">
             μ = {num(fit.mu)} · σ² = {num(fit.variance)} · D = {num(fit.dispersion_index)}
           </p>
           <Button variant="outline" className="h-8 w-full text-xs" onClick={() => onApply(fit)}>
@@ -181,6 +181,11 @@ export function CsvDropzone({ onApply }: { onApply: (fit: DemandFitResult) => vo
 
 /* -------------------------------------------------------------- sidebar */
 
+const DISTRIBUTIONS: { value: FormValues["demandType"]; label: string }[] = [
+  { value: "poisson", label: "Poisson" },
+  { value: "negative_binomial", label: "NegBin" },
+];
+
 export function Sidebar({
   form,
   onChange,
@@ -188,6 +193,7 @@ export function Sidebar({
   loading,
   errors,
   open,
+  lastRun,
 }: {
   form: FormValues;
   onChange: (patch: Partial<FormValues>) => void;
@@ -195,104 +201,77 @@ export function Sidebar({
   loading: boolean;
   errors: string[];
   open: boolean;
+  lastRun: string;
 }) {
   const set = <K extends keyof FormValues>(k: K) => (v: FormValues[K]) => onChange({ [k]: v });
   const nb = form.demandType === "negative_binomial";
 
   return (
     <aside
-      aria-label="Control panel"
+      aria-label="Parameter cockpit"
       className={cn(
-        "w-full shrink-0 border-zinc-800 bg-[#12151E]/70 backdrop-blur-md lg:sticky lg:top-14 lg:block lg:h-[calc(100vh-3.5rem)] lg:w-80 lg:overflow-y-auto lg:border-r",
-        open ? "block border-b" : "hidden",
+        "flex-col self-stretch rounded-xl border border-slate-200/80 bg-white shadow-sm",
+        open ? "flex" : "hidden lg:flex",
       )}
     >
-      <div className="p-4">
-        <Section title="Demand">
-          <div className="col-span-2 space-y-1">
-            <label htmlFor="demand-type" className="text-xs text-zinc-400">
-              Distribution
-            </label>
-            <select
-              id="demand-type"
-              value={form.demandType}
-              onChange={(e) => onChange({ demandType: e.target.value as FormValues["demandType"] })}
-              className="h-9 w-full rounded-lg border border-zinc-800 bg-zinc-950/60 px-3 text-sm text-zinc-100 outline-none focus:border-emerald-500/60"
-            >
-              <option value="poisson">Poisson</option>
-              <option value="negative_binomial">Negative Binomial</option>
-            </select>
+      <div className="flex items-center gap-2 border-b border-slate-100 px-4 py-3.5">
+        <SlidersHorizontal className="h-[15px] w-[15px] text-slate-500" aria-hidden />
+        <h2 className="text-[13px] font-semibold text-slate-900">Parameter Cockpit</h2>
+      </div>
+
+      <div className="flex flex-1 flex-col justify-between gap-4 p-4">
+        <div>
+          <div className={GROUP_TITLE}>Demand Distribution</div>
+          <div role="radiogroup" aria-label="Distribution" className="grid grid-cols-2 gap-1.5">
+            {DISTRIBUTIONS.map((d) => {
+              const on = form.demandType === d.value;
+              return (
+                <button
+                  key={d.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  onClick={() => onChange({ demandType: d.value })}
+                  className={cn(
+                    "rounded-[7px] border py-2.5 text-[12.5px] font-semibold transition-colors",
+                    on
+                      ? "border-blue-600 bg-blue-50 text-blue-700"
+                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50",
+                  )}
+                >
+                  {d.label}
+                </button>
+              );
+            })}
           </div>
-          <NumberField label="Mean μ" value={form.mu} onChange={set("mu")} step={0.5} min={0} />
-          {nb && (
-            <NumberField
-              label="Variance σ²"
-              hint="> μ"
-              value={form.variance}
-              onChange={set("variance")}
-              step={1}
-              min={0}
-            />
-          )}
-        </Section>
+          <div className="mt-2 font-mono text-[11px] leading-normal text-slate-500">
+            E[D] = {num(form.mu, 2)} &nbsp;·&nbsp; Var[D] = {num(nb ? form.variance : form.mu, 2)}
+          </div>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <NumberField label="Mean μ" value={form.mu} onChange={set("mu")} step={0.5} min={0} />
+            {nb && <NumberField label="Variance σ²" value={form.variance} onChange={set("variance")} min={0} />}
+          </div>
+        </div>
 
-        <Section title="Costs">
-          <NumberField label="K — setup" value={form.setup} onChange={set("setup")} min={0} />
-          <NumberField
-            label="c — unit order"
-            value={form.unitOrder}
-            onChange={set("unitOrder")}
-            step={0.5}
-            min={0}
-          />
-          <NumberField
-            label="h — holding"
-            value={form.holding}
-            onChange={set("holding")}
-            step={0.5}
-            min={0}
-          />
-          <NumberField
-            label="p — shortage"
-            value={form.shortage}
-            onChange={set("shortage")}
-            step={0.5}
-            min={0}
-          />
-        </Section>
+        <Group title="Cost Parameters">
+          <NumberField label="K · setup" value={form.setup} onChange={set("setup")} min={0} />
+          <NumberField label="c · unit" value={form.unitOrder} onChange={set("unitOrder")} step={0.5} min={0} />
+          <NumberField label="h · holding" value={form.holding} onChange={set("holding")} step={0.5} min={0} />
+          <NumberField label="p · shortage" value={form.shortage} onChange={set("shortage")} step={0.5} min={0} />
+        </Group>
 
-        <Section title="MDP parameters">
-          <NumberField
-            label="γ — discount"
-            value={form.gamma}
-            onChange={set("gamma")}
-            step={0.005}
-            min={0}
-            max={0.995}
-          />
-          <NumberField
-            label="L — lead time"
-            hint="days"
-            value={form.leadTime}
-            onChange={set("leadTime")}
-            min={0}
-            max={30}
-          />
-          <NumberField label="B — max backlog" value={form.maxBacklog} onChange={set("maxBacklog")} step={5} min={0} />
-          <NumberField label="C — capacity" value={form.capacity} onChange={set("capacity")} step={5} min={1} />
-        </Section>
+        <Group title="MDP Parameters">
+          <NumberField label="γ · discount" value={form.gamma} onChange={set("gamma")} step={0.01} min={0} max={0.995} />
+          <NumberField label="L · lead time" value={form.leadTime} onChange={set("leadTime")} min={0} max={30} />
+          <NumberField label="B · backlog" value={form.maxBacklog} onChange={set("maxBacklog")} step={5} min={0} />
+          <NumberField label="C · capacity" value={form.capacity} onChange={set("capacity")} step={5} min={1} />
+        </Group>
 
-        <Section title="Simulation" defaultOpen={false}>
-          <NumberField label="T — days" value={form.horizon} onChange={set("horizon")} step={30} min={1} />
-          <NumberField
-            label="Replications"
-            value={form.replications}
-            onChange={set("replications")}
-            step={50}
-            min={2}
-          />
+        <CollapsibleGroup title="Simulation">
+          <NumberField label="T · days" value={form.horizon} onChange={set("horizon")} step={30} min={1} />
+          <NumberField label="Replications" value={form.replications} onChange={set("replications")} step={50} min={2} />
           <NumberField label="Seed" value={form.seed} onChange={set("seed")} min={0} />
-        </Section>
+        </CollapsibleGroup>
 
         <CsvDropzone
           onApply={(fit) =>
@@ -306,31 +285,40 @@ export function Sidebar({
           }
         />
 
-        {errors.length > 0 && (
-          <ul role="alert" className="mb-3 space-y-1 rounded-lg border border-rose-500/30 bg-rose-500/5 p-3 text-xs text-rose-300">
-            {errors.map((e) => (
-              <li key={e}>{e}</li>
-            ))}
-          </ul>
-        )}
+        <div>
+          {errors.length > 0 && (
+            <ul role="alert" className="mb-3 space-y-1 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
+              {errors.map((e) => (
+                <li key={e}>{e}</li>
+              ))}
+            </ul>
+          )}
+          <Button
+            variant="primary"
+            className="h-11 w-full text-[13px]"
+            onClick={onRun}
+            loading={loading}
+            disabled={errors.length > 0}
+          >
+            {!loading && <Play className="h-4 w-4" aria-hidden />}
+            {loading ? "Solving…" : "Run Optimization & Simulation"}
+          </Button>
+          <button
+            type="button"
+            onClick={() => onChange(DEFAULT_FORM)}
+            className="mt-2 w-full text-center text-xs text-slate-500 hover:text-slate-700"
+          >
+            Reset to defaults
+          </button>
+        </div>
 
-        <Button
-          variant="primary"
-          className="h-10 w-full"
-          onClick={onRun}
-          loading={loading}
-          disabled={errors.length > 0}
-        >
-          {!loading && <Play className="h-4 w-4" aria-hidden />}
-          {loading ? "Optimizing…" : "Run Optimization & Simulation"}
-        </Button>
-        <button
-          type="button"
-          onClick={() => onChange(DEFAULT_FORM)}
-          className="mt-2 w-full text-center text-xs text-zinc-500 hover:text-zinc-300"
-        >
-          Reset to defaults
-        </button>
+        <div className="border-t border-slate-100 pt-3 font-mono text-[10.5px] leading-relaxed text-slate-400">
+          solver: value-iteration
+          <br />
+          states: {form.maxBacklog + form.capacity + 1} · horizon: {form.horizon}d
+          <br />
+          last run: {lastRun}
+        </div>
       </div>
     </aside>
   );

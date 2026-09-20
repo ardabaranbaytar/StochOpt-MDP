@@ -1,10 +1,9 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
-  Area,
-  AreaChart,
+  Bar,
   CartesianGrid,
+  ComposedChart,
   Line,
-  LineChart,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -12,115 +11,115 @@ import {
   YAxis,
 } from "recharts";
 import { num } from "@/lib/analysis";
-import { COLORS, tooltipStyle } from "@/lib/colors";
+import { COLORS } from "@/lib/colors";
 import type { OptimizeResponse } from "@/lib/types";
-import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/primitives";
-
-function Thresholds({ s, S }: { s: number | null; S: number | null }) {
-  return (
-    <>
-      {s !== null && (
-        <ReferenceLine
-          x={s}
-          stroke={COLORS.threshold}
-          strokeDasharray="4 4"
-          label={{ value: `s = ${s}`, fill: COLORS.threshold, fontSize: 11, position: "insideTopRight" }}
-        />
-      )}
-      {S !== null && (
-        <ReferenceLine
-          x={S}
-          stroke={COLORS.mdp}
-          strokeDasharray="4 4"
-          label={{ value: `S = ${S}`, fill: COLORS.mdp, fontSize: 11, position: "insideTopLeft" }}
-        />
-      )}
-    </>
-  );
-}
+import { ChartTooltip } from "./ui/chart-tooltip";
 
 const axisProps = {
-  stroke: COLORS.axis,
-  tick: { fill: COLORS.axis, fontSize: 11 },
+  stroke: COLORS.grid,
+  tick: { fill: "#94A3B8", fontSize: 11, fontFamily: "IBM Plex Mono, monospace" },
   tickLine: false,
 } as const;
+
+const CHIP = "rounded-[7px] border border-slate-200 bg-slate-50 px-2.5 py-1.5 font-mono text-xs text-slate-700";
 
 export function PolicyTab({ opt, leadTime }: { opt: OptimizeResponse; leadTime: number }) {
   const data = useMemo(
     () => opt.states.map((x, i) => ({ x, value: opt.values[i], order: opt.policy[i] })),
     [opt],
   );
+  const [hover, setHover] = useState<number | null>(null);
+  const point = hover === null ? null : data[hover];
   const xLabel = leadTime > 0 ? "Inventory position x" : "Inventory level x";
 
   return (
-    <div className="grid gap-5 xl:grid-cols-2">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Value function V*(x)</CardTitle>
-            <Badge tone="zinc" className="tabular">
-              {opt.iterations} iterations · residual {opt.residual.toExponential(1)}
-            </Badge>
-          </div>
-          <CardDescription>Optimal expected discounted cost from each state.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-80" role="img" aria-label="Value function chart">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data} margin={{ top: 16, right: 16, bottom: 8, left: 0 }}>
-                <CartesianGrid stroke={COLORS.grid} strokeDasharray="3 3" />
-                <XAxis dataKey="x" type="number" domain={["dataMin", "dataMax"]} label={{ value: xLabel, position: "insideBottom", offset: -2, fill: COLORS.axis, fontSize: 11 }} {...axisProps} />
-                <YAxis width={56} tickFormatter={(v: number) => num(v, 0)} {...axisProps} />
-                <Tooltip
-                  contentStyle={tooltipStyle}
-                  formatter={(v) => [num(Number(v)), "V*(x)"]}
-                  labelFormatter={(x) => `x = ${x}`}
-                />
-                <Thresholds s={opt.s} S={opt.S} />
-                <Line type="monotone" dataKey="value" stroke={COLORS.eoq} strokeWidth={2} dot={false} isAnimationActive={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="p-5">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="text-sm font-semibold text-slate-900">V*(x) and the optimal decision rule</div>
+          <div className="mt-0.5 text-[12.5px] text-slate-500">Hover the chart to inspect a state.</div>
+        </div>
+        <div className="flex items-center gap-3.5 text-xs text-slate-600">
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-[2.5px] w-3.5 bg-blue-600" />V*(x)
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-2.5 w-2.5 rounded-[2px] bg-blue-200" />
+            order qty π*(x)
+          </span>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Decision rule π*(x)</CardTitle>
-            <Badge tone={opt.is_s_S_optimal ? "emerald" : "rose"}>
-              {opt.is_s_S_optimal ? "Pure (s, S) structure" : "Not a pure (s, S) policy"}
-            </Badge>
-          </div>
-          <CardDescription>
-            Units to order in each state: order up to S whenever x ≤ s.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-80" role="img" aria-label="Decision rule chart">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data} margin={{ top: 16, right: 16, bottom: 8, left: 0 }}>
-                <defs>
-                  <linearGradient id="orderFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={COLORS.mdp} stopOpacity={0.45} />
-                    <stop offset="100%" stopColor={COLORS.mdp} stopOpacity={0.02} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid stroke={COLORS.grid} strokeDasharray="3 3" />
-                <XAxis dataKey="x" type="number" domain={["dataMin", "dataMax"]} label={{ value: xLabel, position: "insideBottom", offset: -2, fill: COLORS.axis, fontSize: 11 }} {...axisProps} />
-                <YAxis width={56} allowDecimals={false} {...axisProps} />
-                <Tooltip
-                  contentStyle={tooltipStyle}
-                  formatter={(v) => [`${v} units`, "Order quantity"]}
-                  labelFormatter={(x) => `x = ${x}`}
+      <div className="rounded-[10px] border border-slate-100 bg-white p-1.5">
+        <div className="h-80" role="img" aria-label="Value function and decision rule chart">
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart
+              data={data}
+              margin={{ top: 16, right: 8, bottom: 8, left: 0 }}
+              onMouseMove={(s) => setHover(typeof s?.activeTooltipIndex === "number" ? s.activeTooltipIndex : null)}
+              onMouseLeave={() => setHover(null)}
+            >
+              <CartesianGrid stroke={COLORS.grid} strokeDasharray="3 3" vertical={false} />
+              <XAxis
+                dataKey="x"
+                interval="preserveStartEnd"
+                minTickGap={28}
+                label={{ value: xLabel, position: "insideBottom", offset: -2, fill: "#94A3B8", fontSize: 11 }}
+                {...axisProps}
+              />
+              <YAxis yAxisId="v" width={52} tickFormatter={(v: number) => num(v, 0)} {...axisProps} />
+              <YAxis yAxisId="q" orientation="right" width={36} allowDecimals={false} {...axisProps} />
+              <Tooltip
+                cursor={{ stroke: "#CBD5E1" }}
+                content={
+                  <ChartTooltip
+                    labelFormat={(x) => `x = ${x}`}
+                    format={(e) => [
+                      e.name === "value" ? "V*(x)" : "Order quantity",
+                      e.name === "value" ? num(Number(e.value)) : `${e.value} units`,
+                    ]}
+                  />
+                }
+              />
+              <Bar yAxisId="q" dataKey="order" fill="#BFDBFE" radius={[1, 1, 0, 0]} isAnimationActive={false} />
+              {opt.s !== null && (
+                <ReferenceLine
+                  yAxisId="v"
+                  x={opt.s}
+                  stroke={COLORS.danger}
+                  strokeDasharray="4 4"
+                  strokeWidth={1.5}
+                  label={{ value: `s = ${opt.s}`, fill: COLORS.danger, fontSize: 12, fontWeight: 600, position: "insideTopRight" }}
                 />
-                <Thresholds s={opt.s} S={opt.S} />
-                <Area type="stepAfter" dataKey="order" stroke={COLORS.mdp} strokeWidth={2} fill="url(#orderFill)" isAnimationActive={false} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+              )}
+              {opt.S !== null && (
+                <ReferenceLine
+                  yAxisId="v"
+                  x={opt.S}
+                  stroke={COLORS.mdp}
+                  strokeDasharray="4 4"
+                  strokeWidth={1.5}
+                  label={{ value: `S = ${opt.S}`, fill: COLORS.mdp, fontSize: 12, fontWeight: 600, position: "insideTopLeft" }}
+                />
+              )}
+              <Line yAxisId="v" type="monotone" name="value" dataKey="value" stroke={COLORS.primary} strokeWidth={2.5} dot={false} animationDuration={700} />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-2.5">
+        <span className={CHIP}>
+          {point
+            ? `x = ${point.x}   V*(x) = ${num(point.value, 1)}   π*(x) = ${point.order}`
+            : "x = —   V*(x) = —   π*(x) = —"}
+        </span>
+        <span className={CHIP}>rule: order (S − x) if x ≤ s, else 0</span>
+        <span className={CHIP}>
+          {opt.iterations} iterations · residual {opt.residual.toExponential(1)}
+          {opt.is_s_S_optimal ? "" : " · not a pure (s, S) policy"}
+        </span>
+      </div>
     </div>
   );
 }
