@@ -1,0 +1,37 @@
+# Installed by deploy/setup_vps.sh as /etc/caddy/sites/stochopt.caddy,
+# with the SITE placeholder replaced by the domain (Caddy gets the HTTPS certificate itself).
+{$SITE} {
+	encode zstd gzip
+
+	# FastAPI serves /api/v1/*, /health and its docs at the root, so no prefix stripping.
+	@api path /api/* /health /docs /openapi.json
+	handle @api {
+		reverse_proxy 127.0.0.1:8100 {
+			transport http {
+				# large Monte Carlo runs
+				read_timeout 180s
+			}
+		}
+	}
+
+	# React build: unknown paths fall back to index.html.
+	handle {
+		root * /opt/stochopt-mdp/frontend/dist
+		try_files {path} /index.html
+		file_server
+	}
+
+	@assets path /assets/*
+	header @assets Cache-Control "public, max-age=31536000, immutable"
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		X-Frame-Options DENY
+		-Server
+	}
+
+	log {
+		output file /var/log/caddy/stochopt.log
+	}
+}

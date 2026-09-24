@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from functools import partial
@@ -40,7 +41,8 @@ from .schemas import (
     Trajectory,
 )
 
-MAX_CONCURRENT_JOBS = 4
+# Small public servers set STOCHOPT_MAX_JOBS=1 so one visitor cannot starve the others.
+MAX_CONCURRENT_JOBS = int(os.getenv("STOCHOPT_MAX_JOBS", "4"))
 MAX_VI_ITERATIONS = 10_000  # hard cap on value-iteration sweeps per request
 
 

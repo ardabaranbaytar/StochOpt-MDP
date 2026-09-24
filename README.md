@@ -171,6 +171,14 @@ docker compose down
 İmaj `python:3.11-slim` tabanlı multi-stage build ile oluşturulur (Poetry yalnızca build aşamasında
 bulunur) ve konteynerler root olmayan `appuser` kullanıcısı ile çalışır.
 
+### Deploying to a server
+
+Live at [stochopt.ardabaranbaytar.com](https://stochopt.ardabaranbaytar.com): Caddy serves the React
+build and proxies `/api`, `/health` and `/docs` to uvicorn on `127.0.0.1:8100` (systemd, one heavy job
+at a time via `STOCHOPT_MAX_JOBS=1`). One-time setup on Ubuntu 24.04: `sudo bash deploy/setup_vps.sh`;
+after a push: `sudo bash /opt/stochopt-mdp/deploy/update.sh`. The server is shared with other apps —
+full guide in [quant-lab/docs/deploy.md](https://github.com/ardabaranbaytar/quant-lab/blob/main/docs/deploy.md).
+
 ### Web frontend (React)
 
 `frontend/` is a Vite + React + TypeScript app (Tailwind CSS v4, Recharts, Lucide) that talks to the
