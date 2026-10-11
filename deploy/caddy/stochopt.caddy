@@ -6,6 +6,10 @@
 	# FastAPI serves /api/v1/*, /health and its docs at the root, so no prefix stripping.
 	@api path /api/* /health /docs /openapi.json
 	handle @api {
+		# Request bodies are small JSON documents (demand history is capped by the API too).
+		request_body {
+			max_size 1MB
+		}
 		reverse_proxy 127.0.0.1:8100 {
 			transport http {
 				# large Monte Carlo runs
@@ -28,8 +32,21 @@
 		X-Content-Type-Options nosniff
 		Referrer-Policy strict-origin-when-cross-origin
 		X-Frame-Options DENY
+		Cross-Origin-Opener-Policy same-origin
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+		# No includeSubDomains/preload on purpose, same as the main site.
+		Strict-Transport-Security "max-age=31536000"
 		-Server
 	}
+
+	# Content-Security-Policy for the React app (no inline scripts in frontend/index.html).
+	#  - style-src/font-src allow Google Fonts, which index.html loads (IBM Plex Mono, Public Sans);
+	#    self-hosting the fonts would let both external hosts be dropped;
+	#  - style-src needs 'unsafe-inline' for the style attributes React/Recharts set;
+	#  - img-src data: is the inline SVG favicon;
+	#  - /docs (Swagger UI) loads its assets from a CDN: no CSP there.
+	@csp not path /docs /docs/* /redoc
+	header @csp Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
 
 	log {
 		output file /var/log/caddy/stochopt.log

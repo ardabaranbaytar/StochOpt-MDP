@@ -6,7 +6,8 @@
 #   sudo bash setup_vps.sh stochopt.example.com         # another domain
 #
 # Shares the server with other apps: Caddy loads every file in /etc/caddy/sites/,
-# and this app only adds its own (stochopt.caddy). The API listens on
+# and this app only adds its own (stochopt.caddy); an existing /etc/caddy/Caddyfile is
+# backed up and kept, only the import line is appended. The API listens on
 # 127.0.0.1:8100; the React build is served as static files. Safe to re-run.
 set -euo pipefail
 
@@ -61,12 +62,27 @@ systemctl enable --now stochopt-api.service
 
 step "Caddy site $DOMAIN"
 mkdir -p /etc/caddy/sites /var/log/caddy
-grep -qs '^import sites/\*.caddy' /etc/caddy/Caddyfile || cat > /etc/caddy/Caddyfile <<'CADDY'
+chown caddy:caddy /var/log/caddy
+CADDYFILE=/etc/caddy/Caddyfile
+if ! grep -qs '^import sites/\*.caddy' "$CADDYFILE"; then
+  if [ ! -s "$CADDYFILE" ] || grep -qs '/usr/share/caddy' "$CADDYFILE"; then
+    # Fresh server: replace the stock package Caddyfile (it only serves a welcome page).
+    cat > "$CADDYFILE" <<'CADDY'
 # Each app on this server drops its own site file into /etc/caddy/sites/.
 import sites/*.caddy
 CADDY
+  else
+    # Another app already owns this file (e.g. the website's site block): keep it, add the import.
+    cp "$CADDYFILE" "$CADDYFILE.bak-$(date +%F-%H%M)"
+    printf '\n# Each app on this server drops its own site file into /etc/caddy/sites/.\nimport sites/*.caddy\n' \
+      >> "$CADDYFILE"
+  fi
+fi
 sed "s|{\$SITE}|$DOMAIN|" "$APP/deploy/caddy/stochopt.caddy" > /etc/caddy/sites/stochopt.caddy
-caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+caddy validate --config "$CADDYFILE" --adapter caddyfile
+# `caddy validate` runs as root and creates the log files root-owned, but the service runs as
+# `caddy`: without this chown the reload fails with "permission denied" on the log file.
+chown -R caddy:caddy /var/log/caddy
 systemctl reload-or-restart caddy
 
 echo
