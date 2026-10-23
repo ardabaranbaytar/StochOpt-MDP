@@ -3,7 +3,7 @@ import type { AnalysisResult, OptimizeResponse, PolicyMetrics, SimulateResponse 
 
 /**
  * Client-side value-iteration + Monte Carlo used to populate the dashboard on first paint
- * (ported from the StochOptDashboard.jsx design prototype). It mirrors the API's result shapes, so
+ * (ported from the original single-file design prototype, kept in git history). It mirrors the API's result shapes, so
  * the same components render both this sample and live `POST /optimize` / `POST /simulate` results.
  */
 
