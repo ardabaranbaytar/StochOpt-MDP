@@ -6,7 +6,17 @@ import type {
   SimulateResponse,
 } from "./types";
 
-export class ApiError extends Error {}
+/** Failures the app can name itself; the UI shows them in the visitor's language. */
+export type ApiErrorCode = "unreachable" | "gateway";
+
+export class ApiError extends Error {
+  code?: ApiErrorCode;
+
+  constructor(message: string, code?: ApiErrorCode) {
+    super(message);
+    this.code = code;
+  }
+}
 
 /** FastAPI errors are {detail: string} (400) or {detail: [{loc, msg}]} (422). */
 export function formatApiError(status: number, body: unknown): string {
@@ -28,11 +38,13 @@ async function request(path: string, init?: RequestInit): Promise<Response> {
   try {
     res = await fetch(path, init);
   } catch {
-    throw new ApiError("Cannot reach the API. Is the FastAPI service running?");
+    throw new ApiError("Cannot reach the API. Is the FastAPI service running?", "unreachable");
   }
   if (!res.ok) {
     const body = await res.json().catch(() => null);
-    throw new ApiError(formatApiError(res.status, body));
+    // The reverse proxy answers 502/503/504 with HTML while the API restarts or is busy.
+    const gateway = body === null && [502, 503, 504].includes(res.status);
+    throw new ApiError(formatApiError(res.status, body), gateway ? "gateway" : undefined);
   }
   return res;
 }

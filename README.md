@@ -193,9 +193,16 @@ npm test            # vitest
 npm run build       # type-check + production bundle in frontend/dist
 ```
 
-Tabs: *Executive Summary* (KPIs, benchmark, CSV / PDF export), *Policy & Value Function* (V*(x), π*(x)
-with s / S markers) and *Monte Carlo Trajectory* (90-day path of one replication). With `docker compose`
-the built bundle is served by unprivileged nginx on port 3000.
+Tabs: *Summary* (KPIs, benchmark, CSV / PDF export), *Ordering rule* (V*(x), π*(x) with s / S markers)
+and *Stock over time* (90-day path of one replication). With `docker compose` the built bundle is served
+by unprivileged nginx on port 3000.
+
+The UI is in English, Turkish and German and written in plain words (a short everyday label, the symbol in
+brackets, tooltips for the details). Language buttons sit in the header; the choice is saved in
+`localStorage["lang"]`, the first visit follows the browser language, and a link such as `/?lang=de` opens
+in that language. There is no i18n library: `frontend/src/i18n/en.ts` defines the text and its type,
+`tr.ts` and `de.ts` must match it (a missing key fails `tsc`), `format.ts` formats numbers per language.
+The text the API sends back (error details, the PDF/CSV exports) stays English.
 
 ### Library
 

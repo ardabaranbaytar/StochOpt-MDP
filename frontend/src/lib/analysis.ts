@@ -5,15 +5,14 @@ export function savingsPct(a: PolicyMetrics, baseline: PolicyMetrics): number {
   return 100 * (1 - a.mean_cost / baseline.mean_cost);
 }
 
-export function pct(x: number, digits = 1): string {
-  return `${(100 * x).toFixed(digits)}%`;
-}
+/** An unusable sales CSV; the UI shows the text for `code` in the visitor's language. */
+export class CsvError extends Error {
+  code: "empty" | "noColumn";
 
-export function num(x: number, digits = 2): string {
-  return x.toLocaleString("en-US", {
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  });
+  constructor(code: "empty" | "noColumn", message: string) {
+    super(message);
+    this.code = code;
+  }
 }
 
 const isNum = (c: string | undefined): c is string =>
@@ -26,7 +25,7 @@ export function parseSalesCsv(text: string): number[] {
     .map((l) => l.trim())
     .filter(Boolean)
     .map((l) => l.split(/[,;\t]/).map((c) => c.trim().replace(/^"|"$/g, "")));
-  if (rows.length === 0) throw new Error("The CSV file is empty.");
+  if (rows.length === 0) throw new CsvError("empty", "The CSV file is empty.");
   const width = Math.max(...rows.map((r) => r.length));
   for (let col = 0; col < width; col++) {
     const body = rows.slice(1).map((r) => r[col]);
@@ -35,7 +34,7 @@ export function parseSalesCsv(text: string): number[] {
       if (cells.length >= 2) return cells.map(Number);
     }
   }
-  throw new Error("No numeric sales column with at least 2 rows was found.");
+  throw new CsvError("noColumn", "No numeric sales column with at least 2 rows was found.");
 }
 
 export interface SparkPoint {

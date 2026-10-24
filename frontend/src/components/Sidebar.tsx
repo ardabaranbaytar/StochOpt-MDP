@@ -1,8 +1,12 @@
 import { ChevronDown, FileUp, Play, SlidersHorizontal, Wand2 } from "lucide-react";
 import { type DragEvent, type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { describeError } from "@/i18n/describe-error";
+import { useI18n } from "@/i18n/context";
+import type { Messages } from "@/i18n/en";
+import type { Formatters } from "@/i18n/format";
 import { fitDemand } from "@/lib/api";
-import { num, parseSalesCsv } from "@/lib/analysis";
-import { DEFAULT_FORM, type FormValues } from "@/lib/form";
+import { parseSalesCsv } from "@/lib/analysis";
+import { DEFAULT_FORM, type FormError, type FormValues, MAX_SIM_STEPS } from "@/lib/form";
 import type { DemandFitResult } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Badge, Button } from "./ui/primitives";
@@ -11,6 +15,7 @@ import { Badge, Button } from "./ui/primitives";
 
 export function NumberField({
   label,
+  hint,
   value,
   onChange,
   step = 1,
@@ -18,6 +23,8 @@ export function NumberField({
   max,
 }: {
   label: string;
+  /** Longer explanation, shown as a tooltip. */
+  hint?: string;
   value: number;
   onChange: (v: number) => void;
   step?: number;
@@ -33,8 +40,8 @@ export function NumberField({
   }, [value]);
 
   return (
-    <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="text-[11px] text-slate-600">
+    <div className="flex flex-col justify-between gap-1" title={hint}>
+      <label htmlFor={id} className="text-[11px] leading-tight text-slate-600">
         {label}
       </label>
       <input
@@ -59,16 +66,19 @@ export function NumberField({
 
 const GROUP_TITLE = "mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500";
 
-function Group({ title, children }: { title: string; children: ReactNode }) {
+const GROUP_NOTE = "text-[11px] leading-snug text-slate-500";
+
+function Group({ title, description, children }: { title: string; description: string; children: ReactNode }) {
   return (
     <div>
-      <div className={GROUP_TITLE}>{title}</div>
+      <div className={cn(GROUP_TITLE, "mb-1")}>{title}</div>
+      <p className={cn(GROUP_NOTE, "mb-2")}>{description}</p>
       <div className="grid grid-cols-2 gap-2">{children}</div>
     </div>
   );
 }
 
-function CollapsibleGroup({ title, children }: { title: string; children: ReactNode }) {
+function CollapsibleGroup({ title, description, children }: { title: string; description: string; children: ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
     <div>
@@ -81,7 +91,12 @@ function CollapsibleGroup({ title, children }: { title: string; children: ReactN
         {title}
         <ChevronDown className={cn("h-4 w-4 transition-transform", open && "rotate-180")} />
       </button>
-      {open && <div className="mt-2 grid grid-cols-2 gap-2">{children}</div>}
+      {open && (
+        <>
+          <p className={cn(GROUP_NOTE, "mb-2 mt-1")}>{description}</p>
+          <div className="grid grid-cols-2 gap-2">{children}</div>
+        </>
+      )}
     </div>
   );
 }
@@ -89,11 +104,12 @@ function CollapsibleGroup({ title, children }: { title: string; children: ReactN
 /* --------------------------------------------------------- CSV dropzone */
 
 export function CsvDropzone({ onApply }: { onApply: (fit: DemandFitResult) => void }) {
+  const { t, f } = useI18n();
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [busy, setBusy] = useState(false);
   const [fit, setFit] = useState<DemandFitResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<unknown>(null);
 
   async function handle(file: File | undefined) {
     if (!file) return;
@@ -103,7 +119,7 @@ export function CsvDropzone({ onApply }: { onApply: (fit: DemandFitResult) => vo
     try {
       setFit(await fitDemand(parseSalesCsv(await file.text())));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not fit the CSV.");
+      setError(e ?? new Error());
     } finally {
       setBusy(false);
     }
@@ -118,7 +134,7 @@ export function CsvDropzone({ onApply }: { onApply: (fit: DemandFitResult) => vo
   return (
     <div className="space-y-2 py-3">
       <h2 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-        Historical demand
+        {t.csv.title}
       </h2>
       <div
         onDragOver={(e) => {
@@ -133,45 +149,45 @@ export function CsvDropzone({ onApply }: { onApply: (fit: DemandFitResult) => vo
         )}
       >
         <FileUp className="h-5 w-5 text-slate-500" aria-hidden />
-        <span className="text-slate-600">Drop a CSV of daily sales</span>
+        <span className="text-slate-600">{t.csv.drop}</span>
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
           className="text-blue-600 underline-offset-2 hover:underline"
         >
-          CSV Talep Yükle
+          {t.csv.choose}
         </button>
         <input
           ref={inputRef}
           type="file"
           accept=".csv,text/csv"
           className="hidden"
-          aria-label="Upload demand CSV"
+          aria-label={t.csv.uploadLabel}
           onChange={(e) => {
             void handle(e.target.files?.[0]);
             e.target.value = "";
           }}
         />
       </div>
-      {busy && <p className="text-xs text-slate-500">Fitting distribution…</p>}
-      {error && (
+      {busy && <p className="text-xs text-slate-500">{t.csv.reading}</p>}
+      {error !== null && (
         <p role="alert" className="text-xs text-rose-600">
-          {error}
+          {describeError(error, t)}
         </p>
       )}
       {fit && (
         <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs">
           <div className="flex items-center justify-between">
             <Badge tone={fit.distribution_type === "poisson" ? "sky" : "amber"}>
-              {fit.distribution_type === "poisson" ? "Poisson" : "Negative Binomial"}
+              {fit.distribution_type === "poisson" ? t.settings.demand.steady : t.settings.demand.variable}
             </Badge>
-            <span className="text-slate-500">n = {fit.n}</span>
+            <span className="text-slate-500">{t.csv.days(fit.n)}</span>
           </div>
-          <p className="tabular text-slate-600">
-            μ = {num(fit.mu)} · σ² = {num(fit.variance)} · D = {num(fit.dispersion_index)}
+          <p className="text-slate-600">
+            {t.csv.summary(f.num(fit.mu), f.num(fit.variance), f.num(fit.dispersion_index))}
           </p>
           <Button variant="outline" className="h-8 w-full text-xs" onClick={() => onApply(fit)}>
-            <Wand2 className="h-3.5 w-3.5" aria-hidden /> Apply to model
+            <Wand2 className="h-3.5 w-3.5" aria-hidden /> {t.csv.apply}
           </Button>
         </div>
       )}
@@ -181,10 +197,11 @@ export function CsvDropzone({ onApply }: { onApply: (fit: DemandFitResult) => vo
 
 /* -------------------------------------------------------------- sidebar */
 
-const DISTRIBUTIONS: { value: FormValues["demandType"]; label: string }[] = [
-  { value: "poisson", label: "Poisson" },
-  { value: "negative_binomial", label: "NegBin" },
-];
+const DISTRIBUTIONS = ["poisson", "negative_binomial"] as const satisfies readonly FormValues["demandType"][];
+
+function formErrorText(code: FormError, t: Messages, f: Formatters): string {
+  return code === "workload" ? t.formErrors.workload(f.int(MAX_SIM_STEPS)) : t.formErrors[code];
+}
 
 export function Sidebar({
   form,
@@ -199,16 +216,18 @@ export function Sidebar({
   onChange: (patch: Partial<FormValues>) => void;
   onRun: () => void;
   loading: boolean;
-  errors: string[];
+  errors: FormError[];
   open: boolean;
-  lastRun: string;
+  /** When the last live calculation finished; null while the example results are shown. */
+  lastRun: Date | null;
 }) {
+  const { t, f } = useI18n();
   const set = <K extends keyof FormValues>(k: K) => (v: FormValues[K]) => onChange({ [k]: v });
   const nb = form.demandType === "negative_binomial";
 
   return (
     <aside
-      aria-label="Parameter cockpit"
+      aria-label={t.settings.title}
       className={cn(
         "flex-col self-stretch rounded-xl border border-slate-200/80 bg-white shadow-sm",
         open ? "flex" : "hidden lg:flex",
@@ -216,61 +235,64 @@ export function Sidebar({
     >
       <div className="flex items-center gap-2 border-b border-slate-100 px-4 py-3.5">
         <SlidersHorizontal className="h-[15px] w-[15px] text-slate-500" aria-hidden />
-        <h2 className="text-[13px] font-semibold text-slate-900">Parameter Cockpit</h2>
+        <h2 className="text-[13px] font-semibold text-slate-900">{t.settings.title}</h2>
       </div>
 
       <div className="flex flex-1 flex-col justify-between gap-4 p-4">
         <div>
-          <div className={GROUP_TITLE}>Demand Distribution</div>
-          <div role="radiogroup" aria-label="Distribution" className="grid grid-cols-2 gap-1.5">
+          <div className={GROUP_TITLE}>{t.settings.demand.title}</div>
+          <div role="radiogroup" aria-label={t.settings.demand.title} className="grid grid-cols-2 gap-1.5">
             {DISTRIBUTIONS.map((d) => {
-              const on = form.demandType === d.value;
+              const on = form.demandType === d;
+              const plain = d === "poisson" ? t.settings.demand.steady : t.settings.demand.variable;
+              const tech = d === "poisson" ? t.settings.demand.steadyTech : t.settings.demand.variableTech;
               return (
                 <button
-                  key={d.value}
+                  key={d}
                   type="button"
                   role="radio"
                   aria-checked={on}
-                  onClick={() => onChange({ demandType: d.value })}
+                  onClick={() => onChange({ demandType: d })}
                   className={cn(
-                    "rounded-[7px] border py-2.5 text-[12.5px] font-semibold transition-colors",
+                    "rounded-[7px] border px-1 py-2 transition-colors",
                     on
                       ? "border-blue-600 bg-blue-50 text-blue-700"
                       : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50",
                   )}
                 >
-                  {d.label}
+                  <span className="block text-[12.5px] font-semibold">{plain}</span>
+                  <span className="block font-mono text-[10px] opacity-70">{tech}</span>
                 </button>
               );
             })}
           </div>
           <div className="mt-2 font-mono text-[11px] leading-normal text-slate-500">
-            E[D] = {num(form.mu, 2)} &nbsp;·&nbsp; Var[D] = {num(nb ? form.variance : form.mu, 2)}
+            {t.settings.demand.summary(f.num(form.mu, 2), f.num(nb ? form.variance : form.mu, 2))}
           </div>
           <div className="mt-2 grid grid-cols-2 gap-2">
-            <NumberField label="Mean μ" value={form.mu} onChange={set("mu")} step={0.5} min={0} />
-            {nb && <NumberField label="Variance σ²" value={form.variance} onChange={set("variance")} min={0} />}
+            <NumberField {...t.settings.demand.mean} value={form.mu} onChange={set("mu")} step={0.5} min={0} />
+            {nb && <NumberField {...t.settings.demand.spread} value={form.variance} onChange={set("variance")} min={0} />}
           </div>
         </div>
 
-        <Group title="Cost Parameters">
-          <NumberField label="K · setup" value={form.setup} onChange={set("setup")} min={0} />
-          <NumberField label="c · unit" value={form.unitOrder} onChange={set("unitOrder")} step={0.5} min={0} />
-          <NumberField label="h · holding" value={form.holding} onChange={set("holding")} step={0.5} min={0} />
-          <NumberField label="p · shortage" value={form.shortage} onChange={set("shortage")} step={0.5} min={0} />
+        <Group title={t.settings.costs.title} description={t.settings.costs.description}>
+          <NumberField {...t.settings.costs.setup} value={form.setup} onChange={set("setup")} min={0} />
+          <NumberField {...t.settings.costs.unitOrder} value={form.unitOrder} onChange={set("unitOrder")} step={0.5} min={0} />
+          <NumberField {...t.settings.costs.holding} value={form.holding} onChange={set("holding")} step={0.5} min={0} />
+          <NumberField {...t.settings.costs.shortage} value={form.shortage} onChange={set("shortage")} step={0.5} min={0} />
         </Group>
 
-        <Group title="MDP Parameters">
-          <NumberField label="γ · discount" value={form.gamma} onChange={set("gamma")} step={0.01} min={0} max={0.995} />
-          <NumberField label="L · lead time" value={form.leadTime} onChange={set("leadTime")} min={0} max={30} />
-          <NumberField label="B · backlog" value={form.maxBacklog} onChange={set("maxBacklog")} step={5} min={0} />
-          <NumberField label="C · capacity" value={form.capacity} onChange={set("capacity")} step={5} min={1} />
+        <Group title={t.settings.planning.title} description={t.settings.planning.description}>
+          <NumberField {...t.settings.planning.gamma} value={form.gamma} onChange={set("gamma")} step={0.01} min={0} max={0.995} />
+          <NumberField {...t.settings.planning.leadTime} value={form.leadTime} onChange={set("leadTime")} min={0} max={30} />
+          <NumberField {...t.settings.planning.maxBacklog} value={form.maxBacklog} onChange={set("maxBacklog")} step={5} min={0} />
+          <NumberField {...t.settings.planning.capacity} value={form.capacity} onChange={set("capacity")} step={5} min={1} />
         </Group>
 
-        <CollapsibleGroup title="Simulation">
-          <NumberField label="T · days" value={form.horizon} onChange={set("horizon")} step={30} min={1} />
-          <NumberField label="Replications" value={form.replications} onChange={set("replications")} step={50} min={2} />
-          <NumberField label="Seed" value={form.seed} onChange={set("seed")} min={0} />
+        <CollapsibleGroup title={t.settings.simulation.title} description={t.settings.simulation.description}>
+          <NumberField {...t.settings.simulation.horizon} value={form.horizon} onChange={set("horizon")} step={30} min={1} />
+          <NumberField {...t.settings.simulation.replications} value={form.replications} onChange={set("replications")} step={50} min={2} />
+          <NumberField {...t.settings.simulation.seed} value={form.seed} onChange={set("seed")} min={0} />
         </CollapsibleGroup>
 
         <CsvDropzone
@@ -289,7 +311,7 @@ export function Sidebar({
           {errors.length > 0 && (
             <ul role="alert" className="mb-3 space-y-1 rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
               {errors.map((e) => (
-                <li key={e}>{e}</li>
+                <li key={e}>{formErrorText(e, t, f)}</li>
               ))}
             </ul>
           )}
@@ -301,23 +323,23 @@ export function Sidebar({
             disabled={errors.length > 0}
           >
             {!loading && <Play className="h-4 w-4" aria-hidden />}
-            {loading ? "Solving…" : "Run Optimization & Simulation"}
+            {loading ? t.settings.calculating : t.settings.calculate}
           </Button>
           <button
             type="button"
             onClick={() => onChange(DEFAULT_FORM)}
             className="mt-2 w-full text-center text-xs text-slate-500 hover:text-slate-700"
           >
-            Reset to defaults
+            {t.settings.reset}
           </button>
         </div>
 
         <div className="border-t border-slate-100 pt-3 font-mono text-[10.5px] leading-relaxed text-slate-400">
-          solver: value-iteration
+          {t.settings.footer.method}: {t.settings.footer.methodValue}
           <br />
-          states: {form.maxBacklog + form.capacity + 1} · horizon: {form.horizon}d
+          {t.settings.footer.levels}: {form.maxBacklog + form.capacity + 1} · {t.settings.footer.days}: {form.horizon}
           <br />
-          last run: {lastRun}
+          {t.settings.footer.last}: {lastRun ? f.time(lastRun) : t.settings.footer.example}
         </div>
       </div>
     </aside>

@@ -10,7 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { num } from "@/lib/analysis";
+import { useI18n } from "@/i18n/context";
 import { COLORS } from "@/lib/colors";
 import type { OptimizeResponse } from "@/lib/types";
 import { ChartTooltip } from "./ui/chart-tooltip";
@@ -24,34 +24,36 @@ const axisProps = {
 const CHIP = "rounded-[7px] border border-slate-200 bg-slate-50 px-2.5 py-1.5 font-mono text-xs text-slate-700";
 
 export function PolicyTab({ opt, leadTime }: { opt: OptimizeResponse; leadTime: number }) {
+  const { t, f } = useI18n();
   const data = useMemo(
     () => opt.states.map((x, i) => ({ x, value: opt.values[i], order: opt.policy[i] })),
     [opt],
   );
   const [hover, setHover] = useState<number | null>(null);
   const point = hover === null ? null : data[hover];
-  const xLabel = leadTime > 0 ? "Inventory position x" : "Inventory level x";
+  const xLabel = leadTime > 0 ? t.policy.xPosition : t.policy.xStock;
 
   return (
     <div className="p-5">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="text-sm font-semibold text-slate-900">V*(x) and the optimal decision rule</div>
-          <div className="mt-0.5 text-[12.5px] text-slate-500">Hover the chart to inspect a state.</div>
+          <div className="text-sm font-semibold text-slate-900">{t.policy.title}</div>
+          <div className="mt-0.5 text-[12.5px] text-slate-500">{t.policy.hint}</div>
         </div>
         <div className="flex items-center gap-3.5 text-xs text-slate-600">
           <span className="flex items-center gap-1.5">
-            <span className="inline-block h-[2.5px] w-3.5 bg-blue-600" />V*(x)
+            <span className="inline-block h-[2.5px] w-3.5 bg-blue-600" />
+            {t.policy.legendCost}
           </span>
           <span className="flex items-center gap-1.5">
             <span className="inline-block h-2.5 w-2.5 rounded-[2px] bg-blue-200" />
-            order qty π*(x)
+            {t.policy.legendOrder}
           </span>
         </div>
       </div>
 
       <div className="rounded-[10px] border border-slate-100 bg-white p-1.5">
-        <div className="h-80" role="img" aria-label="Value function and decision rule chart">
+        <div className="h-80" role="img" aria-label={t.policy.chartLabel}>
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart
               data={data}
@@ -67,16 +69,16 @@ export function PolicyTab({ opt, leadTime }: { opt: OptimizeResponse; leadTime: 
                 label={{ value: xLabel, position: "insideBottom", offset: -2, fill: "#94A3B8", fontSize: 11 }}
                 {...axisProps}
               />
-              <YAxis yAxisId="v" width={52} tickFormatter={(v: number) => num(v, 0)} {...axisProps} />
+              <YAxis yAxisId="v" width={52} tickFormatter={(v: number) => f.num(v, 0)} {...axisProps} />
               <YAxis yAxisId="q" orientation="right" width={36} allowDecimals={false} {...axisProps} />
               <Tooltip
                 cursor={{ stroke: "#CBD5E1" }}
                 content={
                   <ChartTooltip
-                    labelFormat={(x) => `x = ${x}`}
+                    labelFormat={(x) => t.policy.tooltipStock(Number(x))}
                     format={(e) => [
-                      e.name === "value" ? "V*(x)" : "Order quantity",
-                      e.name === "value" ? num(Number(e.value)) : `${e.value} units`,
+                      e.name === "value" ? t.policy.tooltipCost : t.policy.tooltipOrder,
+                      e.name === "value" ? f.num(Number(e.value)) : t.policy.items(Number(e.value)),
                     ]}
                   />
                 }
@@ -110,14 +112,12 @@ export function PolicyTab({ opt, leadTime }: { opt: OptimizeResponse; leadTime: 
 
       <div className="mt-3 flex flex-wrap gap-2.5">
         <span className={CHIP}>
-          {point
-            ? `x = ${point.x}   V*(x) = ${num(point.value, 1)}   π*(x) = ${point.order}`
-            : "x = —   V*(x) = —   π*(x) = —"}
+          {point ? t.policy.chip(point.x, f.num(point.value, 1), point.order) : t.policy.chipIdle}
         </span>
-        <span className={CHIP}>rule: order (S − x) if x ≤ s, else 0</span>
+        <span className={CHIP}>{t.policy.rule}</span>
         <span className={CHIP}>
-          {opt.iterations} iterations · residual {opt.residual.toExponential(1)}
-          {opt.is_s_S_optimal ? "" : " · not a pure (s, S) policy"}
+          {t.policy.solved(opt.iterations, opt.residual.toExponential(1))}
+          {opt.is_s_S_optimal ? "" : t.policy.notPure}
         </span>
       </div>
     </div>

@@ -34,32 +34,43 @@ export const DEFAULT_FORM: FormValues = {
   seed: 42,
 };
 
-const MAX_SIM_STEPS = 1_000_000;
+export const MAX_SIM_STEPS = 1_000_000;
+
+/** One code per rule a form can break; the UI turns each into a sentence (see i18n `formErrors`). */
+export type FormError =
+  | "mu"
+  | "variance"
+  | "holding"
+  | "shortage"
+  | "setup"
+  | "unitOrder"
+  | "gamma"
+  | "maxBacklog"
+  | "capacity"
+  | "leadTime"
+  | "horizon"
+  | "replications"
+  | "workload"
+  | "seed";
 
 /** Client-side mirror of the API validation, so users see errors before a round trip. */
-export function validateForm(f: FormValues): string[] {
-  const errors: string[] = [];
+export function validateForm(f: FormValues): FormError[] {
+  const errors: FormError[] = [];
   const isInt = Number.isInteger;
-  if (!(f.mu > 0 && f.mu <= 10_000)) errors.push("μ must be in (0, 10 000].");
-  if (f.demandType === "negative_binomial" && !(f.variance > f.mu))
-    errors.push("σ² must be greater than μ for Negative Binomial demand.");
-  if (!(f.holding > 0)) errors.push("h must be > 0.");
-  if (!(f.shortage > 0)) errors.push("p must be > 0.");
-  if (!(f.setup >= 0)) errors.push("K must be ≥ 0.");
-  if (!(f.unitOrder >= 0)) errors.push("c must be ≥ 0.");
-  if (!(f.gamma > 0 && f.gamma <= 0.995)) errors.push("γ must be in (0, 0.995].");
-  if (!(isInt(f.maxBacklog) && f.maxBacklog >= 0 && f.maxBacklog <= 1000))
-    errors.push("B must be an integer in [0, 1000].");
-  if (!(isInt(f.capacity) && f.capacity >= 1 && f.capacity <= 1000))
-    errors.push("C must be an integer in [1, 1000].");
-  if (!(isInt(f.leadTime) && f.leadTime >= 0 && f.leadTime <= 30))
-    errors.push("L must be an integer in [0, 30].");
-  if (!(isInt(f.horizon) && f.horizon >= 1)) errors.push("T must be a positive integer.");
-  if (!(isInt(f.replications) && f.replications >= 2))
-    errors.push("Replications must be an integer ≥ 2.");
-  if (f.horizon * f.replications > MAX_SIM_STEPS)
-    errors.push(`T × replications must be ≤ ${MAX_SIM_STEPS.toLocaleString("en-US")}.`);
-  if (!(isInt(f.seed) && f.seed >= 0)) errors.push("Seed must be an integer ≥ 0.");
+  if (!(f.mu > 0 && f.mu <= 10_000)) errors.push("mu");
+  if (f.demandType === "negative_binomial" && !(f.variance > f.mu)) errors.push("variance");
+  if (!(f.holding > 0)) errors.push("holding");
+  if (!(f.shortage > 0)) errors.push("shortage");
+  if (!(f.setup >= 0)) errors.push("setup");
+  if (!(f.unitOrder >= 0)) errors.push("unitOrder");
+  if (!(f.gamma > 0 && f.gamma <= 0.995)) errors.push("gamma");
+  if (!(isInt(f.maxBacklog) && f.maxBacklog >= 0 && f.maxBacklog <= 1000)) errors.push("maxBacklog");
+  if (!(isInt(f.capacity) && f.capacity >= 1 && f.capacity <= 1000)) errors.push("capacity");
+  if (!(isInt(f.leadTime) && f.leadTime >= 0 && f.leadTime <= 30)) errors.push("leadTime");
+  if (!(isInt(f.horizon) && f.horizon >= 1)) errors.push("horizon");
+  if (!(isInt(f.replications) && f.replications >= 2)) errors.push("replications");
+  if (f.horizon * f.replications > MAX_SIM_STEPS) errors.push("workload");
+  if (!(isInt(f.seed) && f.seed >= 0)) errors.push("seed");
   return errors;
 }
 

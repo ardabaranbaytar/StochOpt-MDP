@@ -59,39 +59,39 @@ describe("App", () => {
     render(<App />);
     expect(screen.getByText("StochOpt Enterprise")).toBeInTheDocument();
     expect(screen.getByText("v1.1.0")).toBeInTheDocument();
-    expect(screen.getByText("Operations Research Suite")).toBeInTheDocument();
-    expect(await screen.findByText("API online")).toBeInTheDocument();
+    expect(screen.getByText("Smart restocking calculator")).toBeInTheDocument();
+    expect(await screen.findByText("Server online")).toBeInTheDocument();
     expect(screen.queryByText("No analysis yet")).not.toBeInTheDocument();
     const values = screen.getAllByTestId("kpi-value").map((v) => v.textContent ?? "");
     expect(values[0]).toMatch(/^−?\d+\.\d%$/);
     expect(values[1]).toMatch(/^s=-?\d+ S=\d+$/);
     expect(values[2]).toMatch(/^\d+\.\d%$/);
     expect(values[3]).toMatch(/^\d+\.\d%$/);
-    expect(screen.getByText(/Sample analysis/)).toBeInTheDocument();
+    expect(screen.getByText(/Example results/)).toBeInTheDocument();
   });
 
   it("reports API offline when /health fails", async () => {
     fetchMock.mockImplementation(() => Promise.reject(new Error("down")));
     render(<App />);
-    expect(await screen.findByText("API offline")).toBeInTheDocument();
+    expect(await screen.findByText("Server offline")).toBeInTheDocument();
   });
 
   it("runs the analysis, sends lead_time and renders KPIs + benchmark", async () => {
     const user = userEvent.setup();
     render(<App />);
-    await user.clear(screen.getByLabelText(/L · lead time/));
-    await user.type(screen.getByLabelText(/L · lead time/), "2");
-    await user.click(screen.getByRole("button", { name: /Run Optimization & Simulation/ }));
+    await user.clear(screen.getByLabelText(/Delivery days/));
+    await user.type(screen.getByLabelText(/Delivery days/), "2");
+    await user.click(screen.getByRole("button", { name: /^Calculate/ }));
 
     await waitFor(() =>
       expect(screen.getAllByTestId("kpi-value").map((v) => v.textContent)).toEqual(["32.0%", "s=3 S=9", "90.0%", "99.0%"]),
     );
-    expect(screen.queryByText(/Sample analysis/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Example results/)).not.toBeInTheDocument();
     expect(screen.getByText("MDP (s, S)")).toBeInTheDocument();
     expect(screen.getByText("Base-Stock")).toBeInTheDocument();
     expect(screen.getByText("Static EOQ")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Export CSV/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Export PDF/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Download CSV/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Download PDF/ })).toBeInTheDocument();
 
     const sent = fetchMock.mock.calls.filter(([u]) => String(u).startsWith("/api/v1/"));
     expect(sent).toHaveLength(2);
@@ -103,16 +103,16 @@ describe("App", () => {
   it("switches between the three tabs", async () => {
     const user = userEvent.setup();
     render(<App />);
-    await user.click(screen.getByRole("button", { name: /Run Optimization & Simulation/ }));
-    await waitFor(() => expect(screen.queryByText(/Sample analysis/)).not.toBeInTheDocument());
+    await user.click(screen.getByRole("button", { name: /^Calculate/ }));
+    await waitFor(() => expect(screen.queryByText(/Example results/)).not.toBeInTheDocument());
 
-    await user.click(screen.getByRole("tab", { name: /Policy Explorer/ }));
-    expect(screen.getByText("V*(x) and the optimal decision rule")).toBeInTheDocument();
-    expect(screen.getByText(/42 iterations/)).toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: /Ordering rule/ }));
+    expect(screen.getByText("Best order size for each stock level")).toBeInTheDocument();
+    expect(screen.getByText(/Solved in 42 rounds/)).toBeInTheDocument();
 
-    await user.click(screen.getByRole("tab", { name: /Monte Carlo Trajectory/ }));
-    expect(screen.getByText(/Inventory trajectory · 4 days/)).toBeInTheDocument();
-    expect(screen.getByText("Replenishments").nextElementSibling).toHaveTextContent("2");
+    await user.click(screen.getByRole("tab", { name: /Stock over time/ }));
+    expect(screen.getByText(/Stock level over time · 4 days/)).toBeInTheDocument();
+    expect(screen.getByText("Orders placed").nextElementSibling).toHaveTextContent("2");
   });
 
   it("surfaces API errors", async () => {
@@ -121,19 +121,19 @@ describe("App", () => {
     );
     const user = userEvent.setup();
     render(<App />);
-    await user.click(screen.getByRole("button", { name: /Run Optimization & Simulation/ }));
+    await user.click(screen.getByRole("button", { name: /^Calculate/ }));
     expect(await screen.findByText(/did not converge/)).toBeInTheDocument();
   });
 
   it("blocks the run button on invalid input", async () => {
     const user = userEvent.setup();
     render(<App />);
-    await user.click(screen.getByRole("radio", { name: "NegBin" }));
-    const variance = screen.getByLabelText(/Variance/);
+    await user.click(screen.getByRole("radio", { name: /Variable/ }));
+    const variance = screen.getByLabelText(/Spread/);
     await user.clear(variance);
     await user.type(variance, "3");
-    expect(screen.getByRole("button", { name: /Run Optimization & Simulation/ })).toBeDisabled();
-    expect(within(screen.getByRole("alert")).getByText(/σ² must be greater/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Calculate/ })).toBeDisabled();
+    expect(within(screen.getByRole("alert")).getByText(/spread must be larger/)).toBeInTheDocument();
   });
 
   it("fits an uploaded CSV and applies it to the model in one click", async () => {
@@ -154,12 +154,12 @@ describe("App", () => {
     const user = userEvent.setup();
     render(<App />);
     const file = new File(["sales\n5\n20\n12\n"], "sales.csv", { type: "text/csv" });
-    await user.upload(screen.getByLabelText("Upload demand CSV"), file);
-    await user.click(await screen.findByRole("button", { name: /Apply to model/ }));
+    await user.upload(screen.getByLabelText("Upload daily sales as a CSV file"), file);
+    await user.click(await screen.findByRole("button", { name: /Use these numbers/ }));
 
-    await waitFor(() => expect(screen.getByRole("radio", { name: "NegBin" })).toBeChecked());
-    expect(screen.getByLabelText(/Mean μ/)).toHaveValue(12.35);
-    expect(screen.getByLabelText(/Variance/)).toHaveValue(40.5);
+    await waitFor(() => expect(screen.getByRole("radio", { name: /Variable/ })).toBeChecked());
+    expect(screen.getByLabelText(/Average per day/)).toHaveValue(12.35);
+    expect(screen.getByLabelText(/Spread/)).toHaveValue(40.5);
   });
 });
 

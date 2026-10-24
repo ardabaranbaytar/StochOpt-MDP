@@ -1,7 +1,9 @@
 import { BookOpen, Menu, Package } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useI18n } from "@/i18n/context";
 import { checkHealth } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 const GITHUB_URL = "https://github.com/ardabaranbaytar/StochOpt-MDP";
 const POLL_MS = 15_000;
@@ -37,16 +39,17 @@ export function useApiStatus(pollMs = POLL_MS): ApiStatus {
 }
 
 export function StatusIndicator({ status }: { status: ApiStatus }) {
+  const { t } = useI18n();
   const map = {
-    checking: { dot: "bg-slate-400", text: "Checking…", pill: "border-slate-200 bg-slate-50 text-slate-600" },
-    online: { dot: "bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.18)]", text: "API online", pill: "border-emerald-200 bg-emerald-50 text-emerald-700" },
-    offline: { dot: "bg-rose-500 shadow-[0_0_0_3px_rgba(244,63,94,0.18)]", text: "API offline", pill: "border-rose-200 bg-rose-50 text-rose-700" },
+    checking: { dot: "bg-slate-400", text: t.status.checking, pill: "border-slate-200 bg-slate-50 text-slate-600" },
+    online: { dot: "bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.18)]", text: t.status.online, pill: "border-emerald-200 bg-emerald-50 text-emerald-700" },
+    offline: { dot: "bg-rose-500 shadow-[0_0_0_3px_rgba(244,63,94,0.18)]", text: t.status.offline, pill: "border-rose-200 bg-rose-50 text-rose-700" },
   }[status];
   return (
     <span
       role="status"
-      aria-label={`FastAPI status: ${map.text}`}
-      className={cn("inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold", map.pill)}
+      aria-label={t.status.label(map.text)}
+      className={cn("inline-flex items-center gap-2 whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-semibold", map.pill)}
     >
       <span className={cn("h-[7px] w-[7px] rounded-full", map.dot)} />
       {map.text}
@@ -61,14 +64,15 @@ export function Header({
   status: ApiStatus;
   onToggleSidebar: () => void;
 }) {
+  const { t } = useI18n();
   const link = "inline-flex items-center gap-1.5 text-[13px] font-medium text-slate-600 transition-colors hover:text-blue-600";
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200 bg-white">
-      <div className="mx-auto flex h-[68px] max-w-[1560px] items-center gap-4 px-4 lg:px-6">
+      <div className="mx-auto flex min-h-[68px] max-w-[1560px] flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2 lg:px-6">
         <button
           type="button"
           onClick={onToggleSidebar}
-          aria-label="Toggle control panel"
+          aria-label={t.header.toggleSettings}
           className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 lg:hidden"
         >
           <Menu className="h-5 w-5" />
@@ -78,21 +82,23 @@ export function Header({
             <Package className="h-4 w-4" aria-hidden />
           </div>
           <h1 className="text-base font-bold tracking-tight text-slate-900">StochOpt Enterprise</h1>
-          <span className="rounded-[5px] border border-slate-200 bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] text-slate-600">
+          <span className="hidden rounded-[5px] border border-slate-200 bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] text-slate-600 sm:inline-block">
             v1.1.0
           </span>
         </div>
         <StatusIndicator status={status} />
-        <p className="hidden text-[11px] text-slate-500 md:block">Operations Research Suite</p>
-        <div className="flex-1" />
-        <nav className="flex items-center gap-5" aria-label="Resources">
-          <a href="/docs" target="_blank" rel="noreferrer" className={cn(link, "hidden sm:inline-flex")}>
-            <BookOpen className="h-[15px] w-[15px]" aria-hidden /> Docs
-          </a>
-          <a href={GITHUB_URL} target="_blank" rel="noreferrer" className={link}>
-            <GithubMark className="h-[15px] w-[15px]" /> GitHub
-          </a>
-        </nav>
+        <p className="hidden text-[11px] text-slate-500 xl:block">{t.header.subtitle}</p>
+        <div className="ml-auto flex items-center gap-4 sm:gap-5">
+          <LanguageSwitcher />
+          <nav className="flex items-center gap-5" aria-label={t.header.resources}>
+            <a href="/docs" target="_blank" rel="noreferrer" className={cn(link, "hidden whitespace-nowrap sm:inline-flex")}>
+              <BookOpen className="h-[15px] w-[15px]" aria-hidden /> {t.header.docs}
+            </a>
+            <a href={GITHUB_URL} target="_blank" rel="noreferrer" className={link}>
+              <GithubMark className="h-[15px] w-[15px]" /> {t.header.github}
+            </a>
+          </nav>
+        </div>
       </div>
     </header>
   );
