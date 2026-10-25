@@ -43,7 +43,8 @@
 	#  - style-src/font-src allow Google Fonts, which index.html loads (IBM Plex Mono, Public Sans);
 	#    self-hosting the fonts would let both external hosts be dropped;
 	#  - style-src needs 'unsafe-inline' for the style attributes React/Recharts set;
-	#  - img-src data: is the inline SVG favicon;
+	#  - img-src 'self' covers the favicon and header logo (frontend/public/favicon.svg); data: is a
+	#    leftover from the old inline favicon and could be dropped;
 	#  - /docs (Swagger UI) loads its assets from a CDN: no CSP there.
 	@csp not path /docs /docs/* /redoc
 	header @csp Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"

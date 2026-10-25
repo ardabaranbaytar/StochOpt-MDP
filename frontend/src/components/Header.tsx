@@ -1,4 +1,4 @@
-import { BookOpen, Menu, Package } from "lucide-react";
+import { BookOpen, Menu } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useI18n } from "@/i18n/context";
 import { checkHealth } from "@/lib/api";
@@ -78,9 +78,7 @@ export function Header({
           <Menu className="h-5 w-5" />
         </button>
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white shadow-[0_2px_10px_rgba(37,99,235,0.35)]">
-            <Package className="h-4 w-4" aria-hidden />
-          </div>
+          <img src="/favicon.svg" alt="" className="h-8 w-8 rounded-lg shadow-[0_2px_10px_rgba(37,99,235,0.35)]" />
           <h1 className="text-base font-bold tracking-tight text-slate-900">StochOpt Enterprise</h1>
           <span className="hidden rounded-[5px] border border-slate-200 bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] text-slate-600 sm:inline-block">
             v1.1.0
